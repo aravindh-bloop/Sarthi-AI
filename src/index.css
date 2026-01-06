@@ -1,0 +1,123 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Refined palette for a premium, modern agricultural aesthetic */
+    --background: 0.98 0.01 90;
+    /* oklch converted values handled via tailwind config helper or just strictly using hsl/rgb if simpler, but oklch needs v4 or plugin. converting to HSL or just using arbitrary values for safe v3 integration? */
+    /* Wait, tailwind v3 doesn't support oklch natively in colors without plugin or custom function. 
+       I will stick to the user's variables but I might need to ensure they work.
+       Actually, standard browser support for oklch is good. 
+       I will define them as string values and usage in tailwind config.
+    */
+    --background: 98% 0.01 90;
+    /* Approximation or keep oklch syntax if browser supports it */
+  }
+}
+
+/* User provided oklch. Modern browsers support oklch(). Tailwind v3 can use arbitrary values. 
+   I will paste the user's CSS variables exactly as is, but wrap in @layer base.
+   I will remove @theme inline.
+*/
+
+@layer base {
+  :root {
+    --background: 98% 0.01 90;
+    /* CSS variables usually hold the strictly numeric values if using with hsl(), but for simple usage I can just store the full color string if not using tailwind opacity modifiers, OR store values for oklch(). 
+    User's css has: --background: oklch(0.98 0.01 90);
+    I will keep this.
+    */
+    --background: oklch(0.98 0.01 90);
+    --foreground: oklch(0.25 0.04 140);
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.25 0.04 140);
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.25 0.04 140);
+    --primary: oklch(0.42 0.12 145);
+    --primary-foreground: oklch(0.98 0.01 145);
+    --secondary: oklch(0.48 0.14 45);
+    --secondary-foreground: oklch(0.98 0.01 45);
+    --muted: oklch(0.94 0.02 140);
+    --muted-foreground: oklch(0.45 0.04 140);
+    --accent: oklch(0.88 0.1 85);
+    --accent-foreground: oklch(0.3 0.05 45);
+    --destructive: oklch(0.55 0.18 25);
+    --destructive-foreground: oklch(0.98 0.01 25);
+    --border: oklch(0.9 0.02 140);
+    --input: oklch(0.9 0.02 140);
+    --ring: oklch(0.42 0.12 145);
+    --radius: 1rem;
+    --chart-1: oklch(0.646 0.222 41.116);
+    --chart-2: oklch(0.6 0.118 184.704);
+    --chart-3: oklch(0.398 0.07 227.392);
+    --chart-4: oklch(0.828 0.189 84.429);
+    --chart-5: oklch(0.769 0.188 70.08);
+  }
+
+  .dark {
+    --background: oklch(0.15 0.02 120);
+    --foreground: oklch(0.95 0.02 120);
+    --card: oklch(0.18 0.02 120);
+    --card-foreground: oklch(0.95 0.02 120);
+    --popover: oklch(0.145 0 0);
+    --popover-foreground: oklch(0.985 0 0);
+    --primary: oklch(0.6 0.18 145);
+    --primary-foreground: oklch(0.1 0.02 120);
+    --secondary: oklch(0.25 0.03 120);
+    --secondary-foreground: oklch(0.95 0.02 120);
+    --muted: oklch(0.25 0.03 120);
+    --muted-foreground: oklch(0.7 0.02 120);
+    --accent: oklch(0.269 0 0);
+    --accent-foreground: oklch(0.985 0 0);
+    --destructive: oklch(0.396 0.141 25.723);
+    --destructive-foreground: oklch(0.637 0.237 25.331);
+    --border: oklch(0.3 0.03 120);
+    --input: oklch(0.269 0 0);
+    --ring: oklch(0.439 0 0);
+    --chart-1: oklch(0.488 0.243 264.376);
+    --chart-2: oklch(0.696 0.17 162.48);
+    --chart-3: oklch(0.769 0.188 70.08);
+    --chart-4: oklch(0.627 0.265 303.9);
+    --chart-5: oklch(0.645 0.246 16.439);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.custom-scrollbar-dark::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+.custom-scrollbar-dark::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}

@@ -1,0 +1,134 @@
+{
+    "app": {
+        "title": "Sarthi AI",
+        "subtitle": "Smart Farming Platform"
+    },
+    "navigation": {
+        "dashboard": "Dashboard",
+        "planner": "Crop Planner",
+        "health": "Crop Health",
+        "news": "Agri News",
+        "inventory": "Inventory",
+        "settings": "Settings",
+        "signOut": "Sign Out",
+        "features": "Features",
+        "howItWorks": "How it works",
+        "getStarted": "Get Started Free"
+    },
+    "landing": {
+        "hero": {
+            "title": "Sarthi AI",
+            "tagline": "Season-Aware Farm Planning & AI Crop Health Intelligence",
+            "desc": "Plan your farming season, monitor crop health, manage inputs, and receive real-time risk alerts — powered by an intelligent agricultural AI agent.",
+            "ctaPrimary": "Get Started Free",
+            "ctaSecondary": "Explore Features"
+        },
+        "features": {
+            "title": "Everything a Modern Farmer Needs — In One Platform",
+            "health": {
+                "title": "AI Crop Health Analysis",
+                "desc": "Detect plant diseases from photos and get intelligent guidance."
+            },
+            "planner": {
+                "title": "Seasonal Crop Planner",
+                "desc": "Month-wise farming plans aligned with public crop calendars."
+            },
+            "risks": {
+                "title": "Risk & Weather Alerts",
+                "desc": "Early warnings for heat, rainfall, frost, and pests."
+            },
+            "schemes": {
+                "title": "Government Schemes & Subsidies",
+                "desc": "Stay updated with relevant agricultural benefits."
+            },
+            "inventory": {
+                "title": "Inventory & Budget Tracking",
+                "desc": "Manage inputs, quantities, and seasonal costs."
+            }
+        },
+        "howItWorks": {
+            "title": "Your Season, Simplified",
+            "step1": {
+                "title": "Plan",
+                "desc": "Select crops & season → AI builds a custom calendar."
+            },
+            "step2": {
+                "title": "Monitor",
+                "desc": "Upload crop photos and track field conditions."
+            },
+            "step3": {
+                "title": "Get Alerts",
+                "desc": "Receive weather, disease, and scheme notifications."
+            },
+            "step4": {
+                "title": "Act",
+                "desc": "Follow AI-guided actions or escalate to experts."
+            }
+        },
+        "trust": {
+            "p1": "Built using public crop calendars (ICAR, FAO)",
+            "p2": "Designed for Indian farming conditions",
+            "p3": "Advisory-only system (no chemical prescriptions)",
+            "p4": "Built for small & marginal farmers",
+            "disclaimer": "Advisory system only. Please consult local agricultural authorities for critical situations."
+        },
+        "footer": {
+            "about": "About",
+            "features": "Features",
+            "privacy": "Privacy Policy",
+            "terms": "Terms",
+            "contact": "Contact",
+            "sources": "Sources: FAO, ICAR, CIMMYT",
+            "note": "Data used is synthetic or consent-based."
+        },
+        "login": {
+            "title": "Welcome Back",
+            "subtitle": "Sign in to access your farm intelligence",
+            "phoneEmail": "Phone or Email",
+            "password": "Password",
+            "submit": "Continue",
+            "guest": "Continue as Guest",
+            "google": "Sign in with Google"
+        }
+    },
+    "common": {
+        "season": "Season"
+    },
+    "dashboard": {
+        "plannerTitle": "Crop Planner",
+        "live": "LIVE",
+        "updatePlan": "Update Plan",
+        "farmOverview": "Farm Overview",
+        "riskAlerts": "Risk Alerts",
+        "aiInsights": "AI Insights",
+        "intercropping": "Intercropping Suggestion",
+        "optimizedSowing": "Optimized Sowing",
+        "inputBudget": "Input Budget",
+        "totalCost": "Total Cost",
+        "withinBudget": "Within Budget",
+        "activityLog": "Activity Log"
+    },
+    "status": {
+        "upcoming": "Upcoming",
+        "pending": "Pending",
+        "done": "Done",
+        "completed": "Completed"
+    },
+    "planner": {
+        "title": "Crop Planner",
+        "activeSowing": "Active Sowing",
+        "expectedHarvest": "Expected Harvest",
+        "calendar": "Calendar",
+        "list": "List",
+        "addTask": "Add Task",
+        "aiInsights": "AI Insights",
+        "selectField": "Select Field",
+        "allFields": "All Fields",
+        "quickFilters": "Quick Filters",
+        "legend": "Legend",
+        "tasks": "Tasks",
+        "cost": "Est. Cost",
+        "export": "Export Plan",
+        "acceptAll": "Accept All"
+    }
+}
