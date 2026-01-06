@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import {
-    Building2, Banknote, Calendar, MapPin, ChevronRight,
-    Search, Filter, Bookmark, CheckCircle, AlertCircle,
-    BrainCircuit, ExternalLink, X, Coins, Clock, Sprout,
+    Building2, MapPin,
+    Filter, Bookmark, CheckCircle, AlertCircle,
+    BrainCircuit, ExternalLink, Coins, Clock, Sprout,
     ShieldCheck, AlertTriangle
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -129,7 +129,7 @@ export default function NewsPage() {
     // Mock Context for User
     const userLocation = "Tamil Nadu";
     const userCrops = ["Tomato", "Rice"];
-    const userLandSize = "1.5 Hectares"; // Small Farmer
+    // const userLandSize = "1.5 Hectares"; // Small Farmer
 
     // Filter Logic
     const filteredSchemes = SCHEMES.filter(s => {
@@ -147,6 +147,7 @@ export default function NewsPage() {
         }
     };
 
+    /*
     const handleEligibilityCheck = (scheme: Scheme) => {
         // Simple logic for demo
         if (scheme.title.includes("Micro Irrigation") && userLocation !== "Tamil Nadu") {
@@ -154,6 +155,7 @@ export default function NewsPage() {
         }
         return "eligible";
     };
+    */
 
     return (
         <DashboardLayout>

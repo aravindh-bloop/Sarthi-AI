@@ -8,7 +8,7 @@ import {
     Info, DollarSign, MoreHorizontal, PanelRightClose, PanelRightOpen, PanelLeftClose, PanelLeftOpen,
     Search, X, ChevronDown, ChevronUp, HelpCircle, BrainCircuit, Activity, Clock as ClockIcon
 } from 'lucide-react';
-import { format, addDays, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '../firebase';

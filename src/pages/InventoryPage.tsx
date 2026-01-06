@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import {
     Package, Archive, AlertTriangle, TrendingDown, TrendingUp,
-    Plus, Filter, Download, ShoppingCart, Calendar, History,
-    Droplets, Sprout, Hammer, Users, ChevronDown, CheckCircle,
-    Search, AlertCircle, RefreshCw, BrainCircuit
+    Plus, Download, ShoppingCart, Calendar, History,
+    Droplets, Sprout, Hammer, Users, CheckCircle,
+    AlertCircle, RefreshCw, BrainCircuit
 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { motion, AnimatePresence } from 'framer-motion';
+
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell
 } from 'recharts';
@@ -69,11 +69,9 @@ function StatusBadge({ quantity, threshold, expiry }: { quantity: number, thresh
 }
 
 export default function InventoryPage() {
-    const [view, setView] = useState<'list' | 'analytics'>('list');
     const [filterCat, setFilterCat] = useState<Category | 'All'>('All');
     const [items, setItems] = useState<InventoryItem[]>([]);
     const [logs, setLogs] = useState<HistoricalLog[]>([]);
-    const [showRestockModal, setShowRestockModal] = useState(false);
 
     // Fetch Data from API
     React.useEffect(() => {

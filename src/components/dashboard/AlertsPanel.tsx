@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, CloudRain, Sun, Thermometer } from 'lucide-react';
 import type { WeatherAlert } from '../../types';
 import { clsx } from 'clsx';
