@@ -106,7 +106,50 @@
         "inputBudget": "Input Budget",
         "totalCost": "Total Cost",
         "withinBudget": "Within Budget",
-        "activityLog": "Activity Log"
+        "activityLog": "Activity Log",
+        "welcome": "Good Morning",
+        "kpi": {
+            "activeCrops": "Active Crops",
+            "cropsFields": "Crops / Fields",
+            "todayTasks": "Today's Tasks",
+            "pending": "Pending",
+            "completed": "Completed",
+            "weatherRisk": "Weather Risk",
+            "heatAlert": "Heat Alert",
+            "budgetUsed": "Budget Used",
+            "of": "of"
+        },
+        "farmStatus": {
+            "title": "Farm Status",
+            "rabiSeason": "Rabi Season",
+            "sowing": "Sowing",
+            "harvest": "Harvest",
+            "expectedHarvest": "Expected Harvest",
+            "crops": "Crops",
+            "stock": "Stock",
+            "season": "Season",
+            "viewReport": "View Full Report"
+        },
+        "alerts": {
+            "title": "Alerts & Risks",
+            "actionsNeeded": "Actions Needed",
+            "sarthiIntelligence": "Sarthi Intelligence",
+            "accept": "Accept",
+            "ignore": "Ignore"
+        },
+        "planner": {
+            "title": "Plan & Schedule",
+            "today": "Today",
+            "week": "Week",
+            "viewCalendar": "View Full Calendar"
+        },
+        "quickActions": {
+            "logExpense": "Log Expense",
+            "updateStock": "Update Stock",
+            "checkPrices": "Check Prices",
+            "askSarthi": "Ask Sarthi",
+            "aiAssistant": "AI Assistant"
+        }
     },
     "status": {
         "upcoming": "Upcoming",

@@ -106,7 +106,50 @@
         "inputBudget": "உள்ளீடு வரவு செலவு",
         "totalCost": "மொத்த செலவு",
         "withinBudget": "பட்ஜெட்டுக்குள்",
-        "activityLog": "செயல்பாட்டு பதிவு"
+        "activityLog": "செயல்பாட்டு பதிவு",
+        "welcome": "காலை வணக்கம்",
+        "kpi": {
+            "activeCrops": "செயலில் உள்ள பயிர்கள்",
+            "cropsFields": "பயிர்கள் / வயல்கள்",
+            "todayTasks": "இன்றைய பணிகள்",
+            "pending": "நிலுவை",
+            "completed": "முடிந்தது",
+            "weatherRisk": "வானிலை ஆபத்து",
+            "heatAlert": "வெப்ப எச்சரிக்கை",
+            "budgetUsed": "பட்ஜெட் பயன்பாடு",
+            "of": "மொத்தம்"
+        },
+        "farmStatus": {
+            "title": "பண்ணை நிலை",
+            "rabiSeason": "ராபி பருவம்",
+            "sowing": "விதைப்பு",
+            "harvest": "அறுவடை",
+            "expectedHarvest": "எதிர்பார்க்கப்படும் அறுவடை",
+            "crops": "பயிர்கள்",
+            "stock": "கையிருப்பு",
+            "season": "பருவம்",
+            "viewReport": "முழு அறிக்கையை காண்க"
+        },
+        "alerts": {
+            "title": "எச்சரிக்கைகள் & இடர்கள்",
+            "actionsNeeded": "நடவடிக்கை தேவை",
+            "sarthiIntelligence": "சாரதி நுண்ணறிவு",
+            "accept": "ஏற்கவும்",
+            "ignore": "புறக்கணிக்கவும்"
+        },
+        "planner": {
+            "title": "திட்டம் & அட்டவணை",
+            "today": "இன்று",
+            "week": "வாரம்",
+            "viewCalendar": "முழு நாட்காட்டியை காண்க"
+        },
+        "quickActions": {
+            "logExpense": "செலவை பதிவு செய்",
+            "updateStock": "கையிருப்பைப் புதுப்பி",
+            "checkPrices": "விலைகளை சரிபார்",
+            "askSarthi": "சாரதியிடம் கேள்",
+            "aiAssistant": "AI உதவியாளர்"
+        }
     },
     "status": {
         "upcoming": "வரவிருக்கிறது",

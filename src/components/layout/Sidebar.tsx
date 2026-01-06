@@ -14,6 +14,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
+import LanguageSwitcher from '../LanguageSwitcher';
 
 const navItems = [
     { icon: LayoutDashboard, label: 'navigation.dashboard', path: '/dashboard' },
@@ -73,11 +74,18 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 fixed top-0 left-0 z-40 h-screen bg-white shadow-2xl transition-transform duration-300 ease-in-out w-72 lg:hidden flex flex-col
                 ${isOpen ? 'translate-x-0' : '-translate-x-full'}
             `}>
-                <div className="h-20 flex items-center px-6 border-b border-gray-100">
-                    <img src="/sarthi_logo.png" alt="Sarthi AI" className="w-10 h-10 object-contain mr-3" />
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
-                        {t('app.title')}
-                    </span>
+                <div className="h-20 flex items-center px-6 border-b border-gray-100 justify-between">
+                    <div className="flex items-center">
+                        <img src="/sarthi_logo.png" alt="Sarthi AI" className="w-10 h-10 object-contain mr-3" />
+                        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-green-600 to-emerald-600">
+                            {t('app.title')}
+                        </span>
+                    </div>
+                </div>
+
+                {/* Mobile Language Switcher Area */}
+                <div className="px-6 py-2">
+                    <LanguageSwitcher />
                 </div>
 
                 <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
@@ -144,6 +152,7 @@ export default function Sidebar({ isOpen, onToggle }: SidebarProps) {
 
                 {/* Actions */}
                 <div className="flex items-center gap-4">
+                    <LanguageSwitcher />
                     <div className="h-8 w-px bg-gray-200" />
                     <button
                         onClick={handleLogout}
