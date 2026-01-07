@@ -21,7 +21,6 @@ import {
     Radio,
     Phone,
     MapPin,
-    Facebook,
     Twitter,
     Linkedin,
     Instagram,
