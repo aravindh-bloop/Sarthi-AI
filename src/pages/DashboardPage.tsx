@@ -1,14 +1,15 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import {
     Sprout, Calendar, AlertTriangle, Wallet,
     Droplets, Sun, ChevronRight,
     CheckCircle, ArrowRight, Activity,
-    TrendingUp, BarChart3,
+    TrendingUp, TrendingDown, BarChart3,
     Bot, Sparkles, Mic,
-    AlertOctagon, FileText
+    AlertOctagon, FileText, X
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -78,6 +79,9 @@ function TaskRow({ task }: any) {
 
 function UnifiedAlertsCard({ alerts }: any) {
     const { t } = useTranslation();
+    const [showAiAlert, setShowAiAlert] = useState(true);
+    const [ignoreWarning, setIgnoreWarning] = useState(false);
+
     return (
         <div className="bg-white/70 backdrop-blur-xl rounded-3xl border border-white/50 shadow-xl shadow-indigo-100/50 overflow-hidden flex flex-col h-full">
             {/* Header */}
@@ -87,42 +91,79 @@ function UnifiedAlertsCard({ alerts }: any) {
                     {t('dashboard.alerts.title')}
                 </h3>
                 <span className="text-[10px] font-bold bg-red-100 text-red-600 px-2 py-0.5 rounded-full border border-red-200">
-                    {alerts.length + 1} {t('dashboard.alerts.actionsNeeded')}
+                    {alerts.length + (showAiAlert ? 1 : 0)} {t('dashboard.alerts.actionsNeeded')}
                 </span>
             </div>
 
-            {/* AI Insight Section */}
-            <div className="p-5 bg-gradient-to-br from-[#1e1b4b] to-[#3730a3] text-white relative overflow-hidden shrink-0">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 blur-[60px] rounded-full pointer-events-none" />
+            {showAiAlert && (
+                <div className="p-5 bg-gradient-to-br from-[#1e1b4b] to-[#3730a3] text-white relative overflow-hidden shrink-0 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/30 blur-[60px] rounded-full pointer-events-none" />
 
-                <div className="relative z-10">
-                    <div className="flex items-start gap-4">
-                        <div className="p-3 bg-indigo-500/30 rounded-xl border border-indigo-400/30 backdrop-blur-md hidden sm:block">
-                            <Bot className="w-6 h-6 text-indigo-200" />
-                        </div>
-                        <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2 mb-1">
-                                <Sparkles size={12} className="text-amber-300" />
-                                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">{t('dashboard.alerts.sarthiIntelligence')}</span>
+                    <div className="relative z-10">
+                        {!ignoreWarning ? (
+                            <div className="flex items-start gap-4">
+                                <div className="p-3 bg-indigo-500/30 rounded-xl border border-indigo-400/30 backdrop-blur-md hidden sm:block">
+                                    <Bot className="w-6 h-6 text-indigo-200" />
+                                </div>
+                                <div className="space-y-2 flex-1">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <Sparkles size={12} className="text-amber-300" />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-200">{t('dashboard.alerts.sarthiIntelligence')}</span>
+                                    </div>
+                                    <h4 className="font-bold text-lg leading-tight">
+                                        {t('alertsData.aiHeader')} <span className="text-indigo-200 underline decoration-indigo-400 cursor-pointer">{t('fields.fieldA')}</span>.
+                                    </h4>
+                                    <p className="text-xs text-indigo-100/80 leading-relaxed max-w-lg">
+                                        {t('alertsData.aiBody')}
+                                    </p>
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            onClick={() => setShowAiAlert(false)}
+                                            className="px-4 py-1.5 bg-white text-indigo-900 text-xs font-bold rounded-lg shadow-sm hover:bg-slate-50 transition active:scale-95 flex items-center gap-1.5"
+                                        >
+                                            <CheckCircle size={12} /> {t('dashboard.alerts.accept')}
+                                        </button>
+                                        <button
+                                            onClick={() => setIgnoreWarning(true)}
+                                            className="px-4 py-1.5 bg-indigo-800/50 text-indigo-200 text-xs font-bold rounded-lg border border-indigo-500/30 hover:bg-indigo-800/70 transition"
+                                        >
+                                            {t('dashboard.alerts.ignore')}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                            <h4 className="font-bold text-lg leading-tight">
-                                Heavy rain expected. Defer irrigation for <span className="text-indigo-200 underline decoration-indigo-400 cursor-pointer">Field A</span>.
-                            </h4>
-                            <p className="text-xs text-indigo-100/80 leading-relaxed max-w-lg">
-                                70% rain probability tomorrow. Waiting 24h will save water and prevent root rot.
-                            </p>
-                            <div className="flex gap-3 pt-2">
-                                <button className="px-4 py-1.5 bg-white text-indigo-900 text-xs font-bold rounded-lg shadow-sm hover:bg-slate-50 transition active:scale-95 flex items-center gap-1.5">
-                                    <CheckCircle size={12} /> {t('dashboard.alerts.accept')}
-                                </button>
-                                <button className="px-4 py-1.5 bg-indigo-800/50 text-indigo-200 text-xs font-bold rounded-lg border border-indigo-500/30 hover:bg-indigo-800/70 transition">
-                                    {t('dashboard.alerts.ignore')}
-                                </button>
-                            </div>
-                        </div>
+                        ) : (
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="flex flex-col items-center text-center space-y-4 py-2"
+                            >
+                                <AlertTriangle className="w-8 h-8 text-amber-400 animate-pulse" />
+                                <div>
+                                    <h4 className="font-bold text-white text-lg">Are you sure?</h4>
+                                    <p className="text-xs text-indigo-200 max-w-xs mx-auto mt-1">
+                                        Ignoring this alert may lead to <span className="text-amber-300 font-bold">15% yield loss</span> in Wheat due to moisture stress.
+                                    </p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowAiAlert(false)}
+                                        className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg shadow-lg shadow-red-500/20 transition active:scale-95"
+                                    >
+                                        Yes, Ignore Risk
+                                    </button>
+                                    <button
+                                        onClick={() => setIgnoreWarning(false)}
+                                        className="px-4 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-lg border border-white/20 transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
                     </div>
                 </div>
-            </div>
+            )}
 
             {/* Other Alerts List */}
             <div className="p-4 space-y-3 flex-1 overflow-y-auto min-h-[150px]">
@@ -146,9 +187,11 @@ function UnifiedAlertsCard({ alerts }: any) {
     )
 }
 
+
 function UnifiedPlannerCard({ tasks }: any) {
     const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState<'today' | 'week'>('today');
+    const navigate = useNavigate();
 
     const filteredTasks = tasks.filter((task: any) => {
         if (activeTab === 'today') return task.timeline === 'today';
@@ -183,7 +226,10 @@ function UnifiedPlannerCard({ tasks }: any) {
                     <TaskRow key={task.id} task={task} />
                 ))}
                 <div className="pt-2 text-center">
-                    <button className="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center justify-center gap-1 mx-auto">
+                    <button
+                        onClick={() => navigate('/planner')}
+                        className="text-xs font-bold text-blue-600 hover:text-blue-800 transition flex items-center justify-center gap-1 mx-auto"
+                    >
                         {t('dashboard.planner.viewCalendar')} <ArrowRight size={12} />
                     </button>
                 </div>
@@ -240,7 +286,7 @@ function UnifiedStatusCard({ farmStatus }: any) {
                                         </div>
                                     </div>
                                     <ChevronRight className="w-4 h-4 text-slate-300" />
-                                    end</div>
+                                </div>
                             ))}
                         </motion.div>
                     )}
@@ -294,19 +340,23 @@ function UnifiedStatusCard({ farmStatus }: any) {
     )
 }
 
-function QuickActionsBar() {
+function QuickActionsBar({ onAssistantClick, onLogExpense, onUpdateStock, onCheckPrices }: any) {
     const { t } = useTranslation();
     const actions = [
-        { label: t('dashboard.quickActions.logExpense'), icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-100' },
-        { label: t('dashboard.quickActions.updateStock'), icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-100' },
-        { label: t('dashboard.quickActions.checkPrices'), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100' },
-        { label: t('dashboard.quickActions.askSarthi'), icon: Mic, color: 'text-indigo-600', bg: 'bg-indigo-100', agent: true }
+        { label: t('dashboard.quickActions.logExpense'), icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-100', onClick: onLogExpense },
+        { label: t('dashboard.quickActions.updateStock'), icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-100', onClick: onUpdateStock },
+        { label: t('dashboard.quickActions.checkPrices'), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100', onClick: onCheckPrices },
+        { label: t('dashboard.quickActions.askSarthi'), icon: Mic, color: 'text-indigo-600', bg: 'bg-indigo-100', agent: true, onClick: onAssistantClick }
     ];
 
     return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {actions.map((action: any, i: any) => (
-                <button key={i} className="flex items-center gap-3 p-4 bg-white/60 active:bg-white/80 active:scale-95 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all group text-left">
+                <button
+                    key={i}
+                    onClick={action.onClick}
+                    className="flex items-center gap-3 p-4 bg-white/60 active:bg-white/80 active:scale-95 backdrop-blur-md rounded-2xl border border-white/50 shadow-sm hover:shadow-md transition-all group text-left"
+                >
                     <div className={clsx("p-2.5 rounded-xl", action.agent ? "bg-indigo-600 text-white" : "bg-white text-slate-600 border border-slate-100 group-hover:border-indigo-200 group-hover:text-indigo-600")}>
                         <action.icon size={20} />
                     </div>
@@ -338,8 +388,251 @@ function AdditionalResources({ schemes }: any) {
     )
 }
 
+
+function ExpenseModal({ isOpen, onClose }: any) {
+    if (!isOpen) return null;
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm relative z-10">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <Wallet className="text-purple-600" /> Log Expense
+                </h3>
+                <div className="space-y-4">
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Amount (₹)</label>
+                        <input type="number" className="w-full mt-1 p-2 border border-slate-200 rounded-lg font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="0.00" />
+                    </div>
+                    <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase">Category</label>
+                        <select className="w-full mt-1 p-2 border border-slate-200 rounded-lg text-slate-700 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                            <option>Fertilizers</option>
+                            <option>Seeds</option>
+                            <option>Labor</option>
+                            <option>Machinery</option>
+                        </select>
+                    </div>
+                    <button onClick={onClose} className="w-full py-3 bg-purple-600 text-white font-bold rounded-xl hover:bg-purple-700 transition">
+                        Save Expense
+                    </button>
+                    <button onClick={onClose} className="w-full py-2 bg-transparent text-slate-500 font-bold text-xs hover:text-slate-700 transition">
+                        Cancel
+                    </button>
+                </div>
+            </motion.div>
+        </div>
+    );
+}
+
+function MarketPricesModal({ isOpen, onClose }: any) {
+    if (!isOpen) return null;
+    const items = [
+        { crop: 'Wheat', price: '₹2,250/q', trend: 'up' },
+        { crop: 'Mustard', price: '₹5,400/q', trend: 'up' },
+        { crop: 'Potato', price: '₹1,100/q', trend: 'down' },
+        { crop: 'Onion', price: '₹2,800/q', trend: 'stable' },
+    ];
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={onClose} />
+            <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm relative z-10">
+                <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <TrendingUp className="text-emerald-600" /> Market Prices
+                </h3>
+                <div className="space-y-3">
+                    {items.map((item, i) => (
+                        <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <span className="font-bold text-slate-700">{item.crop}</span>
+                            <div className="flex items-center gap-3">
+                                <span className="font-mono font-bold text-slate-900">{item.price}</span>
+                                {item.trend === 'up' && <TrendingUp size={16} className="text-emerald-500" />}
+                                {item.trend === 'down' && <TrendingDown size={16} className="text-red-500" />}
+                                {item.trend === 'stable' && <div className="w-4 h-1 bg-slate-300 rounded-full" />}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <button onClick={onClose} className="w-full mt-6 py-3 bg-white border border-slate-200 text-slate-600 font-bold rounded-xl hover:bg-slate-50 transition">
+                    Close
+                </button>
+            </motion.div>
+        </div>
+    );
+}
+
+function VoiceAssistant({ isOpen, onClose }: any) {
+    const [status, setStatus] = useState<'listening' | 'processing' | 'answering'>('listening');
+    const [query, setQuery] = useState('');
+    const [answerText, setAnswerText] = useState('');
+    const [displayedAnswer, setDisplayedAnswer] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            setStatus('listening');
+            setQuery('');
+            setAnswerText('');
+            setDisplayedAnswer('');
+        }
+    }, [isOpen]);
+
+    const handleAsk = (q: string) => {
+        setQuery(q);
+        setStatus('processing');
+        setTimeout(() => {
+            const answers: any = {
+                'Market prices for Wheat?': "Current market price for Wheat in your region (Mandis in 50km radius) is ₹2,250/quintal. Prices are trending upwards by 2% compared to last week due to high demand.",
+                'Is it going to rain?': "Yes, light evening showers are expected tomorrow (70% probability) in your area. I recommend delaying any planned irrigation by at least 24 hours to conserve water.",
+                'Irrigation schedule?': "Based on soil moisture sensors in Field A, you should irrigate Wheat tomorrow morning (6 AM). Field B (Mustard) moisture levels are adequate for the next 3 days."
+            };
+            setAnswerText(answers[q] || "I don't have information on that specifically, but I can help you connect with an agri-expert.");
+            setStatus('answering');
+        }, 1500);
+    };
+
+    useEffect(() => {
+        if (status === 'answering' && answerText) {
+            let i = 0;
+            const interval = setInterval(() => {
+                setDisplayedAnswer(answerText.substring(0, i));
+                i++;
+                if (i > answerText.length) clearInterval(interval);
+            }, 30);
+            return () => clearInterval(interval);
+        }
+    }, [status, answerText]);
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-4 sm:p-6 pointer-events-none">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm pointer-events-auto transition-opacity" onClick={onClose} />
+
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative w-full max-w-lg bg-white shadow-2xl rounded-3xl overflow-hidden pointer-events-auto flex flex-col max-h-[80vh]"
+            >
+                {/* Header */}
+                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/50 backdrop-blur-sm z-10">
+                    <div className="flex items-center gap-2">
+                        <div className="p-2 bg-indigo-100 rounded-full text-indigo-600">
+                            <Bot size={20} />
+                        </div>
+                        <h3 className="font-bold text-slate-800">Sarthi Assistant</h3>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition">
+                        <X size={20} />
+                    </button>
+                </div>
+
+                {/* Content Area */}
+                <div className="p-6 md:p-8 flex flex-col items-center justify-center min-h-[300px] relative overflow-y-auto">
+
+                    {status === 'listening' && (
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                            className="flex flex-col items-center gap-8 text-center"
+                        >
+                            <div className="relative flex items-center justify-center">
+                                <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-ping" />
+                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-xl shadow-indigo-300 flex items-center justify-center relative z-10 cursor-pointer hover:scale-105 transition-transform">
+                                    <Mic className="text-white w-10 h-10 animate-pulse" />
+                                </div>
+                            </div>
+                            <div className="space-y-2 max-w-xs">
+                                <h4 className="text-2xl font-black text-slate-800">Listening...</h4>
+                                <p className="text-slate-500 font-medium">Ask the agent anything, and get your queries solved right away!</p>
+                            </div>
+                        </motion.div>
+                    )}
+
+                    {status === 'processing' && (
+                        <motion.div
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                            className="flex flex-col items-center gap-6 text-center"
+                        >
+                            <div className="relative">
+                                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse" />
+                                </div>
+                            </div>
+                            <p className="text-lg font-bold text-slate-600 animate-pulse">Processing your query...</p>
+                            <p className="text-sm text-slate-400">"{query}"</p>
+                        </motion.div>
+                    )}
+
+                    {status === 'answering' && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                            className="w-full space-y-6"
+                        >
+                            <div className="flex justify-end">
+                                <div className="bg-indigo-50 text-indigo-900 px-4 py-2 rounded-2xl rounded-tr-sm text-sm font-medium max-w-[80%]">
+                                    {query}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-4 items-start">
+                                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shrink-0 shadow-lg">
+                                    <Bot className="w-5 h-5 text-white" />
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="text-slate-800 font-medium leading-relaxed">
+                                        {displayedAnswer}
+                                        <span className="inline-block w-2 h-4 bg-indigo-500 animate-pulse ml-1 align-middle">|</span>
+                                    </div>
+                                    {displayedAnswer.length === answerText.length && (
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-2">
+                                            <button
+                                                onClick={() => setStatus('listening')}
+                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
+                                            >
+                                                Ask another question <ArrowRight size={12} />
+                                            </button>
+                                        </motion.div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
+
+                </div>
+
+                {/* Footer Suggestions (Only show when listening) */}
+                <AnimatePresence>
+                    {status === 'listening' && (
+                        <motion.div
+                            initial={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            className="bg-slate-50 px-6 py-4 border-t border-slate-100"
+                        >
+                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                                {['Market prices for Wheat?', 'Is it going to rain?', 'Irrigation schedule?'].map((q, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handleAsk(q)}
+                                        className="whitespace-nowrap px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition shadow-sm"
+                                    >
+                                        {q}
+                                    </button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </motion.div>
+        </div>
+    )
+}
+
 export default function DashboardPage() {
     const { t } = useTranslation();
+    const navigate = useNavigate();
+    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+    const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
+    const [isMarketModalOpen, setIsMarketModalOpen] = useState(false);
 
     // --- MOCK DATA WITH TRANSLATIONS ---
     const KPI_DATA = [
@@ -352,38 +645,41 @@ export default function DashboardPage() {
     const FARM_STATUS = {
         season: { name: t('dashboard.farmStatus.rabiSeason'), progress: 42, harvest: 'April 2026' },
         health: [
-            { field: 'Field A', crop: 'Wheat', status: 'healthy', area: '2.5 Acres' },
-            { field: 'Field B', crop: 'Mustard', status: 'warning', area: '1.2 Acres' },
-            { field: 'Field C', crop: 'Potato', status: 'critical', area: '0.8 Acres' },
+            { field: t('fields.fieldA'), crop: t('crops.wheat'), status: 'healthy', area: '2.5 ' + t('units.acres') },
+            { field: t('fields.fieldB'), crop: t('crops.mustard'), status: 'warning', area: '1.2 ' + t('units.acres') },
+            { field: t('fields.fieldC'), crop: t('crops.potato'), status: 'critical', area: '0.8 ' + t('units.acres') },
         ],
         stock: [
-            { name: 'Urea', level: 20, status: 'low', unit: 'Bags' },
-            { name: 'DAP', level: 85, status: 'ok', unit: 'kg' },
-            { name: 'Seeds', level: 60, status: 'ok', unit: 'pkts' },
+            { name: 'Urea', level: 20, status: 'low', unit: t('units.bags') },
+            { name: 'DAP', level: 85, status: 'ok', unit: t('units.kg') },
+            { name: 'Seeds', level: 60, status: 'ok', unit: t('units.pkts') },
         ]
     };
 
     const TASKS = [
-        { id: 1, type: 'Irrigate', typeIcon: 'Irrigate', crop: 'Wheat', field: 'Field A', date: t('dashboard.planner.today') + ', 4:00 PM', status: 'pending', timeline: 'today' },
-        { id: 2, type: 'Scouting', typeIcon: 'Scouting', crop: 'Mustard', field: 'Field B', date: t('dashboard.planner.today') + ', 5:30 PM', status: 'pending', timeline: 'today' },
-        { id: 3, type: 'Fertilize', typeIcon: 'Fertilize', crop: 'Potato', field: 'Field C', date: 'Tomorrow', status: 'upcoming', timeline: 'week' },
-        { id: 4, type: 'Spray', typeIcon: 'Spray', crop: 'Wheat', field: 'Field A', date: 'Jan 12', status: 'upcoming', timeline: 'week' },
-        { id: 5, type: 'Harvest', typeIcon: 'Harvest', crop: 'Mustard', field: 'Field B', date: 'Jan 28', status: 'upcoming', timeline: 'month' },
+        { id: 1, type: t('tasks.irrigate'), typeIcon: 'Irrigate', crop: t('crops.wheat'), field: t('fields.fieldA'), date: t('dashboard.planner.today') + ', 4:00 PM', status: 'pending', timeline: 'today' },
+        { id: 2, type: t('tasks.scouting'), typeIcon: 'Scouting', crop: t('crops.mustard'), field: t('fields.fieldB'), date: t('dashboard.planner.today') + ', 5:30 PM', status: 'pending', timeline: 'today' },
+        { id: 3, type: t('tasks.fertilize'), typeIcon: 'Fertilize', crop: t('crops.potato'), field: t('fields.fieldC'), date: 'Tomorrow', status: 'upcoming', timeline: 'week' },
+        { id: 4, type: t('tasks.spray'), typeIcon: 'Spray', crop: t('crops.wheat'), field: t('fields.fieldA'), date: 'Jan 12', status: 'upcoming', timeline: 'week' },
+        { id: 5, type: t('tasks.harvest'), typeIcon: 'Harvest', crop: t('crops.mustard'), field: t('fields.fieldB'), date: 'Jan 28', status: 'upcoming', timeline: 'month' },
     ];
 
     const ALERTS = [
-        { id: 1, type: 'Heatwave', target: 'Wheat (Field A)', action: 'Irrigate this evening', level: 'high' },
-        { id: 2, type: 'Pest Risk', target: 'Mustard (Field B)', action: 'Scout for Aphids', level: 'medium' },
+        { id: 1, type: t('alertsData.heatwave'), target: t('crops.wheat') + ' (' + t('fields.fieldA') + ')', action: t('tasks.irrigateAction'), level: 'high' },
+        { id: 2, type: t('alertsData.pestRisk'), target: t('crops.mustard') + ' (' + t('fields.fieldB') + ')', action: t('tasks.scoutAction'), level: 'medium' },
     ];
 
     const SCHEMES = [
-        { id: 1, title: 'PM-Kisan Installment', due: 'Credits in 5 days', icon: Wallet },
-        { id: 2, title: 'Drip Irrigation Subsidy', due: 'Closing soon', icon: Droplets },
-        { id: 3, title: 'Soil Health Card', due: 'Update Required', icon: FileText },
+        { id: 1, title: t('schemData.pmKisan'), due: t('schemData.creditsDue'), icon: Wallet },
+        { id: 2, title: t('schemData.dripSub'), due: t('schemData.closingSoon'), icon: Droplets },
+        { id: 3, title: t('schemData.soilCard'), due: t('schemData.updateReq'), icon: FileText },
     ];
 
     return (
         <DashboardLayout>
+            <VoiceAssistant isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
+            <ExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} />
+            <MarketPricesModal isOpen={isMarketModalOpen} onClose={() => setIsMarketModalOpen(false)} />
             <div className="min-h-screen pb-20 p-4 md:p-6 lg:p-8 font-sans text-slate-800 bg-gradient-to-br from-lime-200 via-green-300 to-emerald-400 relative">
 
                 <div className="relative z-10 max-w-7xl mx-auto space-y-8">
@@ -400,8 +696,11 @@ export default function DashboardPage() {
                             <p className="text-slate-500 font-medium">{t('dashboard.welcome')}, Aravind</p>
                         </div>
                         <div className="flex gap-2">
-                            <button className="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-300 hover:bg-slate-700 transition active:scale-95 flex items-center gap-2">
-                                <Bot size={18} /> Sarthi Assistant
+                            <button
+                                onClick={() => setIsAssistantOpen(true)}
+                                className="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-300 hover:bg-slate-700 transition active:scale-95 flex items-center gap-2"
+                            >
+                                <Bot size={18} /> {t('dashboard.sarthiAssistant')}
                             </button>
                         </div>
                     </div>
@@ -437,7 +736,12 @@ export default function DashboardPage() {
 
                     {/* 4. Secondary Actions / Footer */}
                     <div className="space-y-4">
-                        <QuickActionsBar />
+                        <QuickActionsBar
+                            onAssistantClick={() => setIsAssistantOpen(true)}
+                            onLogExpense={() => setIsExpenseModalOpen(true)}
+                            onUpdateStock={() => navigate('/inventory')}
+                            onCheckPrices={() => setIsMarketModalOpen(true)}
+                        />
                         <AdditionalResources schemes={SCHEMES} />
                     </div>
 

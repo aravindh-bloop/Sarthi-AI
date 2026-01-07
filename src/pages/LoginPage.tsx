@@ -19,6 +19,13 @@ import {
     ScanLine,
     History,
     Radio,
+    Phone,
+    MapPin,
+    Facebook,
+    Twitter,
+    Linkedin,
+    Instagram,
+    Youtube
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -60,7 +67,9 @@ function LanguageToggle() {
 }
 
 
+
 function LoginForm() {
+    const { t } = useTranslation();
     const [step, setStep] = React.useState<"email" | "password">("email")
     const [email, setEmail] = React.useState("")
     const [password, setPassword] = React.useState("")
@@ -93,15 +102,15 @@ function LoginForm() {
             console.error(err);
             setIsLoading(false)
             if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-                setError("Invalid email or password.");
+                setError(t('authPage.errors.invalid'));
             } else if (err.code === 'auth/email-already-in-use') {
-                setError("Email is already registered.");
+                setError(t('authPage.errors.emailInUse'));
             } else if (err.code === 'auth/weak-password') {
-                setError("Password should be at least 6 characters.");
+                setError(t('authPage.errors.weakPassword'));
             } else if (err.code === 'auth/operation-not-allowed') {
-                setError("Email/Password login is not enabled in Firebase Console.");
+                setError(t('authPage.errors.opNotAllowed'));
             } else {
-                setError(`Failed: ${err.message || "Unknown error"}`);
+                setError(t('authPage.errors.failed', { message: err.message || "Unknown error" }));
             }
         }
     }
@@ -113,12 +122,12 @@ function LoginForm() {
                     <Lock className="w-8 h-8 text-primary -rotate-3" />
                 </div>
                 <CardTitle className="text-3xl font-medium text-foreground tracking-tight">
-                    {step === "email" ? (isSignUp ? "Create Account" : "Welcome Back") : "Secure Access"}
+                    {step === "email" ? (isSignUp ? t('authPage.createAccount') : t('authPage.welcomeBack')) : t('authPage.secureAccess')}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground font-medium pt-2">
                     {step === "email"
-                        ? "Enter your credentials to access Sarthi AI"
-                        : `Verifying identity for ${email}`}
+                        ? t('authPage.enterCredentials')
+                        : t('authPage.verifyingIdentity', { email })}
                 </CardDescription>
             </CardHeader>
 
@@ -135,7 +144,7 @@ function LoginForm() {
                         >
                             <div className="space-y-3">
                                 <label className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground/60 px-1">
-                                    Email Address
+                                    {t('authPage.emailAddress')}
                                 </label>
                                 <div className="relative group">
                                     <Input
@@ -158,7 +167,7 @@ function LoginForm() {
                                         onClick={() => setIsSignUp(!isSignUp)}
                                         className="text-xs font-medium text-primary hover:underline"
                                     >
-                                        {isSignUp ? "Already have an account? Sign In" : "New to Sarthi? Create an Account"}
+                                        {isSignUp ? t('authPage.alreadyHaveAccount') : t('authPage.newToSarthi')}
                                     </button>
                                 </div>
                             </div>
@@ -168,7 +177,7 @@ function LoginForm() {
                                 className="w-full h-16 bg-foreground hover:bg-primary text-white rounded-2xl font-bold uppercase tracking-[0.15em] text-xs transition-all shadow-2xl shadow-foreground/10 group top-btn"
                                 disabled={isLoading}
                             >
-                                Continue
+                                {t('authPage.continue')}
                                 <ArrowRight className="ml-3 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                             </Button>
                         </motion.form>
@@ -183,7 +192,7 @@ function LoginForm() {
                         >
                             <div className="space-y-2">
                                 <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 px-1">
-                                    Password
+                                    {t('authPage.password')}
                                 </label>
                                 <div className="relative">
                                     <Input
@@ -211,7 +220,7 @@ function LoginForm() {
                                     className="w-full h-14 bg-primary hover:bg-primary/90 text-white rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl shadow-primary/20"
                                     disabled={isLoading}
                                 >
-                                    {isLoading ? <span className="animate-pulse">Verifying...</span> : (isSignUp ? "Sign Up" : "Secure Login")}
+                                    {isLoading ? <span className="animate-pulse">{t('authPage.verifying')}</span> : (isSignUp ? t('authPage.signUp') : t('authPage.secureLogin'))}
                                 </Button>
                                 <Button
                                     variant="ghost"
@@ -222,7 +231,7 @@ function LoginForm() {
                                     }}
                                     className="w-full text-slate-400 hover:text-slate-900 font-bold uppercase tracking-widest text-[10px]"
                                 >
-                                    Change Email
+                                    {t('authPage.changeEmail')}
                                 </Button>
                             </div>
                         </motion.form>
@@ -231,7 +240,7 @@ function LoginForm() {
 
                 <div className="mt-8 pt-8 border-t border-slate-50 flex items-center justify-center gap-2 text-slate-300">
                     <ShieldCheck className="w-4 h-4" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">SSL Secured Access</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{t('authPage.sslSecured')}</span>
                 </div>
             </CardContent>
         </Card>
@@ -239,6 +248,7 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
+    const { t } = useTranslation();
     const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false)
 
     return (
@@ -247,9 +257,7 @@ export default function LoginPage() {
             <nav className="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100">
                 <div className="max-w-7xl mx-auto px-6 h-20 flex items-center">
                     <div className="flex items-center gap-2">
-                        <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg shadow-primary/20">
-                            <Sprout className="text-white w-6 h-6" />
-                        </div>
+                        <img src="/sarthi_logo.png" alt="Sarthi AI" className="w-10 h-10 object-contain" />
                         <span className="text-xl font-black tracking-tight text-slate-900">Sarthi AI</span>
                     </div>
 
@@ -258,19 +266,19 @@ export default function LoginPage() {
                             href="#features"
                             className="text-sm font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest"
                         >
-                            Features
+                            {t('navigation.features')}
                         </a>
                         <a
                             href="#about"
                             className="text-sm font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest"
                         >
-                            About Us
+                            {t('landing.footer.about')}
                         </a>
                         <a
                             href="#help"
                             className="text-sm font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest"
                         >
-                            Help Desk
+                            {t('navigation.help') || "Help Desk"}
                         </a>
                         <LanguageToggle />
                     </div>
@@ -293,21 +301,21 @@ export default function LoginPage() {
                         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
                             <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/10 backdrop-blur-md rounded-full text-white text-sm font-black uppercase tracking-widest border border-white/20 shadow-lg">
                                 <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                                The Future of Agricultural Intelligence
+                                {t('authPage.hero.tag')}
                             </div>
 
                             <h1 className="text-5xl md:text-7xl font-bold text-white leading-tight tracking-tight drop-shadow-xl">
-                                The Intelligence Layer for <span className="text-emerald-300 font-serif italic">Modern Farming</span>
+                                {t('authPage.hero.titlePart1')} <span className="text-emerald-300 font-serif italic">{t('authPage.hero.titlePart2')}</span>
                             </h1>
 
                             <div className="space-y-6">
                                 <p className="text-2xl md:text-3xl font-light text-white/95 leading-tight drop-shadow-lg">
-                                    Seasonal Clarity. Health Intelligence.<br />
-                                    <span className="font-semibold text-emerald-200">Resource Precision.</span>
+                                    {t('authPage.hero.sub1')}<br />
+                                    <span className="font-semibold text-emerald-200">{t('authPage.hero.sub2')}</span>
                                 </p>
 
                                 <p className="text-lg text-white/80 leading-relaxed max-w-xl font-medium drop-shadow-md">
-                                    Sarthi AI unifies crop planning, plant health analysis, and farm resource optimization into a single season-aware intelligence system — built for Indian farming realities.
+                                    {t('authPage.hero.desc')}
                                 </p>
                             </div>
 
@@ -337,15 +345,13 @@ export default function LoginPage() {
                         <div className="text-center max-w-3xl mx-auto mb-20 space-y-6">
                             <div className="inline-flex items-center gap-2 px-3 py-1 bg-emerald-100/50 border border-emerald-200 rounded-full text-emerald-800 text-[10px] font-black uppercase tracking-widest">
                                 <Sprout className="w-3 h-3" />
-                                <span>Core Capabilities</span>
+                                <span>{t('authPage.features.tag')}</span>
                             </div>
                             <h2 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">
-                                Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700">Sarthi AI?</span>
+                                {t('authPage.features.title')} <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-700">Sarthi AI?</span>
                             </h2>
                             <p className="text-slate-600 font-medium text-lg leading-relaxed">
-                                Because farming today needs intelligence, not guesswork.
-                                <br className="hidden md:block" />
-                                Sarthi AI brings planning, monitoring, risk awareness, and financial clarity into one unified, season-aware platform.
+                                {t('authPage.features.desc')}
                             </p>
                         </div>
 
@@ -353,27 +359,27 @@ export default function LoginPage() {
                             {[
                                 {
                                     icon: Sprout,
-                                    title: "Crop & Plant Health Intelligence",
-                                    desc: "Plant images, historical health records, and seasonal context are jointly analyzed. Early stress and disease risks are identified, escalated, and tracked longitudinally.",
-                                    coverage: "Plant Health Analyzer + Longitudinal Monitoring"
+                                    title: t('authPage.features.items.health.title'),
+                                    desc: t('authPage.features.items.health.desc'),
+                                    coverage: t('authPage.features.items.health.coverage')
                                 },
                                 {
                                     icon: Calendar,
-                                    title: "Seasonal Planning & Risk Orchestration",
-                                    desc: "Crop calendars, weather signals, and field constraints are synthesized. Task schedules are dynamically adjusted as risks emerge.",
-                                    coverage: "Planner + Weather / Pest / Climate Risk Alerts"
+                                    title: t('authPage.features.items.planning.title'),
+                                    desc: t('authPage.features.items.planning.desc'),
+                                    coverage: t('authPage.features.items.planning.coverage')
                                 },
                                 {
                                     icon: Coins,
-                                    title: "Resource & Input Optimization",
-                                    desc: "Water usage, input stocks, and budgets are continuously monitored. Wastage is minimized and shortages are anticipated before impact occurs.",
-                                    coverage: "Smart Water Optimization + Inventory / Stock Management"
+                                    title: t('authPage.features.items.resource.title'),
+                                    desc: t('authPage.features.items.resource.desc'),
+                                    coverage: t('authPage.features.items.resource.coverage')
                                 },
                                 {
                                     icon: ClipboardList,
-                                    title: "Policy & Opportunity Awareness",
-                                    desc: "Government schemes, subsidies, and advisories are filtered and contextualized. Only relevant benefits are surfaced at the right stage of the season.",
-                                    coverage: "Agri-News + Subsidy Awareness"
+                                    title: t('authPage.features.items.policy.title'),
+                                    desc: t('authPage.features.items.policy.desc'),
+                                    coverage: t('authPage.features.items.policy.coverage')
                                 },
                             ].map((feature, i) => (
                                 <div
@@ -426,13 +432,13 @@ export default function LoginPage() {
                             <div className="text-left mb-16 space-y-4">
                                 <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 rounded-full border border-white/10 mb-4 animate-pulse">
                                     <Brain className="w-5 h-5 text-emerald-400" />
-                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">Where We Stand Out</span>
+                                    <span className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">{t('authPage.spotlight.tag')}</span>
                                 </div>
                                 <h2 className="text-5xl md:text-6xl font-light text-white tracking-[0.2em] uppercase drop-shadow-2xl">
-                                    SĀRTHI AGENTIC AI
+                                    {t('authPage.spotlight.title')}
                                 </h2>
                                 <p className="text-slate-300 font-serif italic text-xl md:text-2xl leading-relaxed max-w-3xl opacity-90">
-                                    "From soil to harvest, every signal is observed and every action is guided by an autonomous farm intelligence."
+                                    {t('authPage.spotlight.quote')}
                                 </p>
                             </div>
 
@@ -441,25 +447,25 @@ export default function LoginPage() {
                                 {[
                                     {
                                         icon: ScanLine,
-                                        title: "Intelligent Plant Health Analyzer",
-                                        desc: "SĀRTHI AI doesn’t just detect disease from leaf images. It connects symptoms with season, weather, and crop stage before suggesting action.",
-                                        why: "No generic treatments. Only timely, localized care.",
+                                        title: t('authPage.spotlightItems.item1.title'),
+                                        desc: t('authPage.spotlightItems.item1.desc'),
+                                        why: t('authPage.spotlightItems.item1.why'),
                                         color: "text-emerald-400",
                                         bg: "bg-emerald-400/10"
                                     },
                                     {
                                         icon: History,
-                                        title: "Longitudinal Farm Intelligence",
-                                        desc: "Your farm is treated as a living system across seasons, not a one-time input. SĀRTHI AI learns from past crops, yields, and issues to optimize future decisions.",
-                                        why: "Every season gets smarter than the last.",
+                                        title: t('authPage.spotlightItems.item2.title'),
+                                        desc: t('authPage.spotlightItems.item2.desc'),
+                                        why: t('authPage.spotlightItems.item2.why'),
                                         color: "text-indigo-400",
                                         bg: "bg-indigo-400/10"
                                     },
                                     {
                                         icon: Radio,
-                                        title: "Proactive News & Risk Awareness",
-                                        desc: "Agricultural news, pest alerts, and policy updates are filtered for your crops and region. No noise. Only what impacts your farm.",
-                                        why: "You react early, not after losses happen.",
+                                        title: t('authPage.spotlightItems.item3.title'),
+                                        desc: t('authPage.spotlightItems.item3.desc'),
+                                        why: t('authPage.spotlightItems.item3.why'),
                                         color: "text-amber-400",
                                         bg: "bg-amber-400/10"
                                     }
@@ -482,7 +488,7 @@ export default function LoginPage() {
                                         </p>
 
                                         <div className="pt-6 border-t border-white/5">
-                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">Why it’s better</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 block mb-2">{t('authPage.spotlightItems.whyLabel')}</span>
                                             <p className={`text-sm font-medium ${feature.color}`}>
                                                 {feature.why}
                                             </p>
@@ -490,31 +496,105 @@ export default function LoginPage() {
                                     </motion.div>
                                 ))}
                             </div>
+
+                            <div className="mt-12 pt-8 border-t border-white/10 text-center">
+                                <p className="text-white text-xs font-medium uppercase tracking-wider opacity-90">
+                                    {t('authPage.spotlight.disclaimer')}
+                                </p>
+                            </div>
                         </div>
                     </div>
                 </section>
             </main>
 
             {/* Footer */}
-            <footer className="py-12 px-6 border-t border-slate-100">
-                <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
-                    <div className="flex items-center gap-2 opacity-50">
-                        <Sprout className="w-5 h-5" />
-                        <span className="text-xs font-black uppercase tracking-widest">Sarthi AI &copy; 2026</span>
+            <footer className="bg-slate-900 pt-24 pb-12 border-t border-slate-800">
+                <div className="max-w-7xl mx-auto px-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+                        {/* Brand Column */}
+                        <div className="space-y-6">
+                            <div className="flex items-center gap-2 text-white">
+                                <Sprout className="w-8 h-8 text-emerald-400" />
+                                <span className="text-2xl font-black tracking-tight">Sarthi AI</span>
+                            </div>
+                            <p className="text-slate-400 text-sm leading-relaxed">
+                                {t('authPage.hero.desc')}
+                            </p>
+                            <div className="flex gap-4">
+                                <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-emerald-500 hover:text-white transition-all">
+                                    <Twitter className="w-4 h-4" />
+                                </a>
+                                <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-emerald-500 hover:text-white transition-all">
+                                    <Linkedin className="w-4 h-4" />
+                                </a>
+                                <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-emerald-500 hover:text-white transition-all">
+                                    <Instagram className="w-4 h-4" />
+                                </a>
+                                <a href="#" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-emerald-500 hover:text-white transition-all">
+                                    <Youtube className="w-4 h-4" />
+                                </a>
+                            </div>
+                        </div>
+
+                        {/* Quick Links */}
+                        <div>
+                            <h4 className="text-white font-bold uppercase tracking-widest text-xs mb-8">{t('landing.footer.quickLinks')}</h4>
+                            <ul className="space-y-4">
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('landing.footer.about')}</a>
+                                </li>
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('navigation.features')}</a>
+                                </li>
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('navigation.howItWorks')}</a>
+                                </li>
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('navigation.help')}</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Legal */}
+                        <div>
+                            <h4 className="text-white font-bold uppercase tracking-widest text-xs mb-8">{t('landing.footer.legal')}</h4>
+                            <ul className="space-y-4">
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('landing.footer.privacy')}</a>
+                                </li>
+                                <li>
+                                    <a href="#" className="text-slate-400 hover:text-emerald-400 transition-colors text-sm font-medium">{t('landing.footer.terms')}</a>
+                                </li>
+                            </ul>
+                        </div>
+
+                        {/* Contact */}
+                        <div>
+                            <h4 className="text-white font-bold uppercase tracking-widest text-xs mb-8">{t('landing.footer.contact')}</h4>
+                            <ul className="space-y-6">
+                                <li className="flex items-start gap-3 text-slate-400">
+                                    <MapPin className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+                                    <span className="text-sm leading-relaxed">{t('landing.footer.address')}</span>
+                                </li>
+                                <li className="flex items-center gap-3 text-slate-400">
+                                    <Phone className="w-5 h-5 text-emerald-500 shrink-0" />
+                                    <span className="text-sm font-medium">{t('landing.footer.phone')}</span>
+                                </li>
+                                <li className="flex items-center gap-3 text-slate-400">
+                                    <Mail className="w-5 h-5 text-emerald-500 shrink-0" />
+                                    <span className="text-sm font-medium">{t('landing.footer.email')}</span>
+                                </li>
+                            </ul>
+                        </div>
                     </div>
-                    <div className="flex gap-8">
-                        <a
-                            href="#"
-                            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
-                        >
-                            Privacy Policy
-                        </a>
-                        <a
-                            href="#"
-                            className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-primary transition-colors"
-                        >
-                            Terms of Service
-                        </a>
+
+                    <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <div className="flex items-center gap-2 text-slate-500">
+                            <span className="text-xs font-bold uppercase tracking-widest">&copy; 2026 Sarthi AI. All rights reserved.</span>
+                        </div>
+                        <div className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">
+                            {t('landing.footer.sources')}
+                        </div>
                     </div>
                 </div>
             </footer>

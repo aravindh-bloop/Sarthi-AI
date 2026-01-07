@@ -13,7 +13,8 @@
         "signOut": "Sign Out",
         "features": "Features",
         "howItWorks": "How it works",
-        "getStarted": "Get Started Free"
+        "getStarted": "Get Started Free",
+        "help": "Help Desk"
     },
     "landing": {
         "hero": {
@@ -77,9 +78,15 @@
             "features": "Features",
             "privacy": "Privacy Policy",
             "terms": "Terms",
-            "contact": "Contact",
+            "contact": "Contact Us",
             "sources": "Sources: FAO, ICAR, CIMMYT",
-            "note": "Data used is synthetic or consent-based."
+            "note": "Data used is synthetic or consent-based.",
+            "quickLinks": "Quick Links",
+            "legal": "Legal",
+            "address": "123, Green Tech Park, Sector 4, New Delhi - 110001",
+            "phone": "+91 98765 43210",
+            "email": "support@sarthi.ai",
+            "connect": "Connect with Us"
         },
         "login": {
             "title": "Welcome Back",
@@ -149,7 +156,8 @@
             "checkPrices": "Check Prices",
             "askSarthi": "Ask Sarthi",
             "aiAssistant": "AI Assistant"
-        }
+        },
+        "sarthiAssistant": "Sarthi Assistant"
     },
     "status": {
         "upcoming": "Upcoming",
@@ -161,8 +169,8 @@
         "title": "Crop Planner",
         "activeSowing": "Active Sowing",
         "expectedHarvest": "Expected Harvest",
-        "calendar": "Calendar",
-        "list": "List",
+        "viewCalendar": "Calendar",
+        "viewList": "List",
         "addTask": "Add Task",
         "aiInsights": "AI Insights",
         "selectField": "Select Field",
@@ -172,6 +180,279 @@
         "tasks": "Tasks",
         "cost": "Est. Cost",
         "export": "Export Plan",
-        "acceptAll": "Accept All"
+        "acceptAll": "Accept All",
+        "hero": {
+            "title": "Sarthi Strategy Hub",
+            "agentVersion": "AGENT v2.1"
+        },
+        "searchPlaceholder": "Search tasks...",
+        "toggleSidebar": "Toggle Sidebar",
+        "toggleAI": "Toggle AI Insights",
+        "overviewMode": "Overview Mode",
+        "filterFieldTooltip": "Filter plan by specific field",
+        "aiFilterLabel": "Show AI Pending Tasks Only",
+        "activeDirective": "Active Directive",
+        "objectivePrefix": "Sarthi's Strategic Objective:",
+        "descPrefix": "For",
+        "descSuffix": "my autonomous logic is",
+        "auton": "Auton",
+        "directs": "Directs",
+        "agent": {
+            "coreStatus": "Sarthi Core Status",
+            "connectivity": "Connectivity",
+            "model": "Model",
+            "sync": "Sync",
+            "status": {
+                "stable": "Stable",
+                "live": "Live"
+            },
+            "logs": [
+                "Monitoring soil moisture sensors in Plot A...",
+                "Analyzing thermal satellite imagery for Plot B...",
+                "Calibrating irrigation nodes for upcoming heatwave...",
+                "Cross-referencing market prices with local mandis...",
+                "Updating autonomous harvest windows for Rabi crops...",
+                "Scanning for early-stage fungal detection in Chilli plots...",
+                "Optimizing equipment logistics for Kharif sowing...",
+                "Evaluating nitrogen levels across all alluvial sectors..."
+            ]
+        },
+        "ai": {
+            "liveAnalysis": "Live Analysis",
+            "acceptAll": "Accept All",
+            "viewLogic": "View Operational Logic",
+            "reasoningPath": "Agent Reasoning Path",
+            "endorse": "Endorse Directive",
+            "dismiss": "Dismiss",
+            "impact": "Impact",
+            "agentLed": "Agent-Led",
+            "sarthiLogic": "Sarthi Logic"
+        },
+        "risk": {
+            "humidity": {
+                "title": "High Humidity Risk",
+                "desc": "High chance of fungal infection."
+            },
+            "high": "HIGH",
+            "priority": "Priority",
+            "addAction": "Add Fungicide Task"
+        },
+        "budget": {
+            "seeds": "Seeds",
+            "fertilizer": "Fertilizer",
+            "labor": "Labor",
+            "saved": "saved",
+            "total": "Total"
+        },
+        "modal": {
+            "addTaskTitle": "Add New Task",
+            "selectFieldQuestion": "Which field is this task for?",
+            "steps": [
+                "Select Field",
+                "Select Crop",
+                "Task Details"
+            ],
+            "selectCrop": "Select Crop",
+            "taskType": "Task Type",
+            "selectTypePlaceholder": "Select Type...",
+            "taskName": "Task Name",
+            "taskNamePlaceholder": "e.g. Activity",
+            "date": "Date",
+            "aiDateHint": "AI suggests best dates based on weather & soil.",
+            "createTask": "Create Task",
+            "recommendedSowing": "Recommended Sowing",
+            "expectedHarvest": "Expected Harvest",
+            "back": "Back",
+            "next": "Next",
+            "error": {
+                "sowingDate": "Invalid Sowing Date!",
+                "harvestDate": "Invalid Harvest Date!",
+                "sowingRange": "can only be sown in",
+                "harvestRange": "is harvested in"
+            }
+        },
+        "list": {
+            "date": "Date",
+            "taskDetails": "Task Details",
+            "fieldCrop": "Field / Crop",
+            "estCost": "Est. Cost",
+            "status": "Status",
+            "action": "Action"
+        },
+        "unknown": "Unknown",
+        "unknownPlot": "Unknown Plot",
+        "priority": "Priority"
+    },
+    "strategies": {
+        "january": {
+            "objective": "Post-Rabi Yield Retrieval",
+            "desc": "executing precision harvesting for Potato and Mustard. AI is monitoring overnight frost risk for late-stage Chilli crops in Plot C."
+        },
+        "february": {
+            "objective": "Peak Harvest & Summer Preparation",
+            "desc": "coordinating labor for Chana (Gram) and Jeera harvesting. Soil thermal modeling initiated for Summer Chilli sowing in Zaid season."
+        },
+        "march": {
+            "objective": "Transition & Market Timing",
+            "desc": "finalizing Barley and Coriander cycles. Sarthi is analyzing market price trends to optimize the storage-vs-selling window for your harvest."
+        },
+        "april": {
+            "objective": "Soil Rehabilitation & Fallow Mgmt",
+            "desc": "managing post-harvest residue and preparing for Kharif cycles. Autonomous pH balancing and organic enrichment protocols active."
+        },
+        "may": {
+            "objective": "Heat Stress & Resource Staging",
+            "desc": "misting protocols active for Mentha in Greenhouse. Staging seeds and fertilizers for June Soybean sowing to beat demand surges."
+        },
+        "june": {
+            "objective": "Kharif Launch & Moisture Lock",
+            "desc": "Sowing Soybean and Cotton. My logic is tracking monsoon onset to trigger precision sowing windows based on 72-hour soil moisture predictions."
+        },
+        "july": {
+            "objective": "Vigor Establishment & Weed Shield",
+            "desc": "monitoring seedling emergence in Maize and Guar fields. Pre-emptive weeding schedules set based on rain-triggered growth surges."
+        },
+        "august": {
+            "objective": "Nutrient Pulse & Pest Vigilance",
+            "desc": "triggering second-stage NPK delivery for Turmeric. AI vision models monitoring for early signs of Red Spiders in Cotton plots."
+        },
+        "september": {
+            "objective": "Pre-Rabi Calibration",
+            "desc": "preparing plots for Black Pepper and early Rabi Wheat. Logic analyzing soil depletion rates to calibrate base-layer fertilization."
+        },
+        "october": {
+            "objective": "Rabi Launch & Crop Diversification",
+            "desc": "simultaneously managing Soybean harvest and Mustard/Chana sowing. Logic is de-conflicting equipment usage across Plot A and Plot B."
+        },
+        "november": {
+            "objective": "Irrigation Precision & Frost Guard",
+            "desc": "scheduling Drip cycles for Jeera and Coriander. Night-time thermal sensors active to protect young Potato (Rabi) sprouts."
+        },
+        "december": {
+            "objective": "Dormancy Mgmt & Bio-Protection",
+            "desc": "optimizing photosynthesis rates in lower light conditions. Autonomous application of micro-nutrients to strengthen cellular resistance to December chills."
+        }
+    },
+    "crops": {
+        "wheat": "Wheat",
+        "mustard": "Mustard",
+        "potato": "Potato"
+    },
+    "fields": {
+        "fieldA": "Field A",
+        "fieldB": "Field B",
+        "fieldC": "Field C"
+    },
+    "tasks": {
+        "irrigate": "Irrigate",
+        "scouting": "Scouting",
+        "fertilize": "Fertilize",
+        "spray": "Spray",
+        "harvest": "Harvest",
+        "irrigateAction": "Irrigate this evening",
+        "scoutAction": "Scout for Aphids"
+    },
+    "alertsData": {
+        "heatwave": "Heatwave",
+        "pestRisk": "Pest Risk",
+        "aiHeader": "Heavy rain expected. Defer irrigation for",
+        "aiBody": "70% rain probability tomorrow. Waiting 24h will save water and prevent root rot."
+    },
+    "units": {
+        "acres": "Acres",
+        "bags": "Bags",
+        "kg": "kg",
+        "pkts": "pkts"
+    },
+    "schemData": {
+        "pmKisan": "PM-Kisan Installment",
+        "dripSub": "Drip Irrigation Subsidy",
+        "soilCard": "Soil Health Card",
+        "creditsDue": "Credits in 5 days",
+        "closingSoon": "Closing soon",
+        "updateReq": "Update Required"
+    },
+    "authPage": {
+        "createAccount": "Create Account",
+        "welcomeBack": "Welcome Back",
+        "secureAccess": "Secure Access",
+        "enterCredentials": "Enter your credentials to access Sarthi AI",
+        "verifyingIdentity": "Verifying identity for {{email}}",
+        "emailAddress": "Email Address",
+        "alreadyHaveAccount": "Already have an account? Sign In",
+        "newToSarthi": "New to Sarthi? Create an Account",
+        "continue": "Continue",
+        "password": "Password",
+        "changeEmail": "Change Email",
+        "signUp": "Sign Up",
+        "secureLogin": "Secure Login",
+        "verifying": "Verifying...",
+        "sslSecured": "SSL Secured Access",
+        "errors": {
+            "invalid": "Invalid email or password.",
+            "emailInUse": "Email is already registered.",
+            "weakPassword": "Password should be at least 6 characters.",
+            "opNotAllowed": "Email/Password login is not enabled.",
+            "failed": "Failed: {{message}}"
+        },
+        "hero": {
+            "tag": "The Future of Agricultural Intelligence",
+            "titlePart1": "The Intelligence Layer for",
+            "titlePart2": "Modern Farming",
+            "sub1": "Seasonal Clarity. Health Intelligence.",
+            "sub2": "Resource Precision.",
+            "desc": "Sarthi AI unifies crop planning, plant health analysis, and farm resource optimization into a single season-aware intelligence system — built for Indian farming realities."
+        },
+        "features": {
+            "tag": "Core Capabilities",
+            "title": "Why Choose",
+            "desc": "Because farming today needs intelligence, not guesswork. Sarthi AI brings planning, monitoring, risk awareness, and financial clarity into one unified, season-aware platform.",
+            "items": {
+                "health": {
+                    "title": "Crop & Plant Health Intelligence",
+                    "desc": "Plant images, historical health records, and seasonal context are jointly analyzed. Early stress and disease risks are identified, escalated, and tracked longitudinally.",
+                    "coverage": "Plant Health Analyzer + Longitudinal Monitoring"
+                },
+                "planning": {
+                    "title": "Seasonal Planning & Risk Orchestration",
+                    "desc": "Crop calendars, weather signals, and field constraints are synthesized. Task schedules are dynamically adjusted as risks emerge.",
+                    "coverage": "Planner + Weather / Pest / Climate Risk Alerts"
+                },
+                "resource": {
+                    "title": "Resource & Input Optimization",
+                    "desc": "Water usage, input stocks, and budgets are continuously monitored. Wastage is minimized and shortages are anticipated before impact occurs.",
+                    "coverage": "Smart Water Optimization + Inventory / Stock Management"
+                },
+                "policy": {
+                    "title": "Policy & Opportunity Awareness",
+                    "desc": "Government schemes, subsidies, and advisories are filtered and contextualized. Only relevant benefits are surfaced at the right stage of the season.",
+                    "coverage": "Agri-News + Subsidy Awareness"
+                }
+            }
+        },
+        "spotlight": {
+            "tag": "Where We Stand Out",
+            "title": "SĀRTHI AGENTIC AI",
+            "quote": "\"From soil to harvest, every signal is observed and every action is guided by an autonomous farm intelligence.\"",
+            "disclaimer": "Our platform delivers advisory guidance grounded in trusted public sources like ICAR and FAO, with no medical or chemical prescriptions, and includes escalation mechanisms for high‑risk scenarios."
+        },
+        "spotlightItems": {
+            "item1": {
+                "title": "Intelligent Plant Health Analyzer",
+                "desc": "SĀRTHI AI doesn’t just detect disease from leaf images. It connects symptoms with season, weather, and crop stage before suggesting action.",
+                "why": "No generic treatments. Only timely, localized care."
+            },
+            "item2": {
+                "title": "Longitudinal Farm Intelligence",
+                "desc": "Your farm is treated as a living system across seasons, not a one-time input. SĀRTHI AI learns from past crops, yields, and issues to optimize future decisions.",
+                "why": "Every season gets smarter than the last."
+            },
+            "item3": {
+                "title": "Proactive News & Risk Awareness",
+                "desc": "Agricultural news, pest alerts, and policy updates are filtered for your crops and region. No noise. Only what impacts your farm.",
+                "why": "You react early, not after losses happen."
+            },
+            "whyLabel": "Why it’s better"
+        }
     }
 }

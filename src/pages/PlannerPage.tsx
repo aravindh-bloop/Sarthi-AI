@@ -64,6 +64,12 @@ const AI_SUGGESTIONS: AISuggestion[] = [
     { id: 'ai3', type: 'intercropping', text: 'Plant Marigold in Plot C', reasoning: 'Marigolds naturally repel nematodes which frequently attack Tomato plants.', impact: 'Reduce pesticide cost' },
 ];
 
+const MOCK_PLOTS: Plot[] = [
+    { id: 'plot_a', name: 'Field A (North)', crop: 'Wheat', size: '2.5 Acres', soil: 'Loamy', irrigation: 'Drip', image: '🌾' },
+    { id: 'plot_b', name: 'Field B (South)', crop: 'Mustard', size: '1.2 Acres', soil: 'Clay', irrigation: 'Sprinkler', image: '🌱' },
+    { id: 'plot_c', name: 'Orchard 1', crop: 'Mango', size: '4 Acres', soil: 'Red', irrigation: 'Drip', image: '🌳' },
+];
+
 // --- Main Application ---
 
 export default function PlannerPage() {
@@ -82,7 +88,7 @@ export default function PlannerPage() {
         return () => window.removeEventListener('resize', handleResize);
     }, [viewMode]);
     const [showLeftPanel, setShowLeftPanel] = useState(false);
-    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'asc' });
     const [aiFilterOnly, setAiFilterOnly] = useState(false);
     const [cropDetails, setCropDetails] = useState<any[]>([]);
 
@@ -102,17 +108,28 @@ export default function PlannerPage() {
         // 2. Plots Listener
         const unsubPlots = onSnapshot(collection(db, 'plots'), (snap) => {
             const plotsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plot));
-            setPlots(plotsData);
+            // Merge Mock Plots for Demo
+            const mergedPlots = [...plotsData, ...MOCK_PLOTS.filter(mp => !plotsData.find(p => p.id === mp.id))];
+            setPlots(mergedPlots);
         });
 
         // 3. Tasks Listener
         const unsubTasks = onSnapshot(collection(db, 'tasks'), (snap) => {
-            const tasksData = snap.docs.map(doc => {
+            const tasksData = snap.docs.map((doc, index) => {
                 const data = doc.data();
+                const taskDate = new Date(data.date);
+                let taskPlotId = data.plotId;
+
+                // DEMO: Assign Mock Plots to tasks from Jan (0) to May (4)
+                if (taskDate.getMonth() <= 4) {
+                    taskPlotId = MOCK_PLOTS[index % MOCK_PLOTS.length].id;
+                }
+
                 return {
                     ...data,
                     id: doc.id,
-                    date: new Date(data.date) // Parse ISO string to Date object
+                    date: taskDate,
+                    plotId: taskPlotId
                 } as Task;
             });
             setTasks(tasksData);
@@ -198,85 +215,25 @@ export default function PlannerPage() {
 
     // --- Dynamic Strategy Logic ---
     const strategy = React.useMemo(() => {
-        const monthName = format(currentMonth, 'MMMM');
-        const strategies: Record<string, { objective: string, desc: string, completion: number }> = {
-            'January': {
-                objective: 'Post-Rabi Yield Retrieval',
-                desc: 'executing precision harvesting for Potato and Mustard. AI is monitoring overnight frost risk for late-stage Chilli crops in Plot C.',
-                completion: 84
-            },
-            'February': {
-                objective: 'Peak Harvest & Summer Preparation',
-                desc: 'coordinating labor for Chana (Gram) and Jeera harvesting. Soil thermal modeling initiated for Summer Chilli sowing in Zaid season.',
-                completion: 78
-            },
-            'March': {
-                objective: 'Transition & Market Timing',
-                desc: 'finalizing Barley and Coriander cycles. Sarthi is analyzing market price trends to optimize the storage-vs-selling window for your harvest.',
-                completion: 92
-            },
-            'April': {
-                objective: 'Soil Rehabilitation & Fallow Mgmt',
-                desc: 'managing post-harvest residue and preparing for Kharif cycles. Autonomous pH balancing and organic enrichment protocols active.',
-                completion: 95
-            },
-            'May': {
-                objective: 'Heat Stress & Resource Staging',
-                desc: 'misting protocols active for Mentha in Greenhouse. Staging seeds and fertilizers for June Soybean sowing to beat demand surges.',
-                completion: 88
-            },
-            'June': {
-                objective: 'Kharif Launch & Moisture Lock',
-                desc: 'Sowing Soybean and Cotton. My logic is tracking monsoon onset to trigger precision sowing windows based on 72-hour soil moisture predictions.',
-                completion: 72
-            },
-            'July': {
-                objective: 'Vigor Establishment & Weed Shield',
-                desc: 'monitoring seedling emergence in Maize and Guar fields. Pre-emptive weeding schedules set based on rain-triggered growth surges.',
-                completion: 81
-            },
-            'August': {
-                objective: 'Nutrient Pulse & Pest Vigilance',
-                desc: 'triggering second-stage NPK delivery for Turmeric. AI vision models monitoring for early signs of Red Spiders in Cotton plots.',
-                completion: 86
-            },
-            'September': {
-                objective: 'Pre-Rabi Calibration',
-                desc: 'preparing plots for Black Pepper and early Rabi Wheat. Logic analyzing soil depletion rates to calibrate base-layer fertilization.',
-                completion: 90
-            },
-            'October': {
-                objective: 'Rabi Launch & Crop Diversification',
-                desc: 'simultaneously managing Soybean harvest and Mustard/Chana sowing. Logic is de-conflicting equipment usage across Plot A and Plot B.',
-                completion: 83
-            },
-            'November': {
-                objective: 'Irrigation Precision & Frost Guard',
-                desc: 'scheduling Drip cycles for Jeera and Coriander. Night-time thermal sensors active to protect young Potato (Rabi) sprouts.',
-                completion: 87
-            },
-            'December': {
-                objective: 'Dormancy Mgmt & Bio-Protection',
-                desc: 'optimizing photosynthesis rates in lower light conditions. Autonomous application of micro-nutrients to strengthen cellular resistance to December chills.',
-                completion: 94
-            }
+        const monthName = format(currentMonth, 'MMMM').toLowerCase();
+        // Fallback for completion rates which were hardcoded
+        const completionRates: Record<string, number> = {
+            'january': 84, 'february': 78, 'march': 92, 'april': 95,
+            'may': 88, 'june': 72, 'july': 81, 'august': 86,
+            'september': 90, 'october': 83, 'november': 87, 'december': 94
         };
-        return strategies[monthName] || strategies['January'];
-    }, [currentMonth]);
+
+        return {
+            objective: t(`strategies.${monthName}.objective`),
+            desc: t(`strategies.${monthName}.desc`),
+            completion: completionRates[monthName] || 85
+        };
+    }, [currentMonth, t]);
 
     const agentLog = React.useMemo(() => {
-        const logs = [
-            "Monitoring soil moisture sensors in Plot A...",
-            "Analyzing thermal satellite imagery for Plot B...",
-            "Calibrating irrigation nodes for upcoming heatwave...",
-            "Cross-referencing market prices with local mandis...",
-            "Updating autonomous harvest windows for Rabi crops...",
-            "Scanning for early-stage fungal detection in Chilli plots...",
-            "Optimizing equipment logistics for Kharif sowing...",
-            "Evaluating nitrogen levels across all alluvial sectors..."
-        ];
-        return `> ${logs[currentMonth.getMonth() % logs.length]}`;
-    }, [currentMonth]);
+        const index = currentMonth.getMonth() % 8; // 8 logs in array
+        return `> ${t(`planner.agent.logs.${index}`)}`;
+    }, [currentMonth, t]);
 
     const handleExport = () => {
         const monthTasks = filteredTasks.filter(t =>
@@ -347,26 +304,26 @@ export default function PlannerPage() {
                             <button
                                 onClick={() => setShowLeftPanel(!showLeftPanel)}
                                 className="p-2 hover:bg-white/50 rounded-lg text-gray-500 transition-colors hidden lg:block"
-                                title={showLeftPanel ? "Hide Sidebar" : "Show Sidebar"}
+                                title={showLeftPanel ? t('planner.toggleSidebar') : t('planner.toggleSidebar')}
                             >
                                 {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                             </button>
                             <div>
                                 <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
-                                    Sarthi Strategy Hub
+                                    {t('planner.hero.title')}
                                     <div className="flex -space-x-1 items-center ml-2">
                                         <div className="w-8 h-8 rounded-full bg-emerald-500 border-2 border-white flex items-center justify-center shadow-sm relative z-10">
                                             <BrainCircuit className="w-5 h-5 text-white" />
                                         </div>
                                         <div className="px-3 py-1 bg-gray-900 text-[10px] text-white font-mono rounded-r-full pl-4 shadow-sm border border-gray-800">
-                                            AGENT v2.1
+                                            {t('planner.hero.agentVersion')}
                                         </div>
                                     </div>
                                 </h1>
                                 <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-sm text-gray-600 mt-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200 uppercase tracking-wide text-xs">
-                                            {seasonInfo.season} Season
+                                            {seasonInfo.season} {t('common.season')}
                                         </span>
                                         <span className="hidden sm:inline w-1 h-1 rounded-full bg-gray-400" />
                                         <span className="font-medium">{format(currentMonth, 'MMMM yyyy')}</span>
@@ -384,7 +341,7 @@ export default function PlannerPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                             <input
                                 type="text"
-                                placeholder="Search tasks..."
+                                placeholder={t('planner.searchPlaceholder')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="pl-9 pr-4 py-2 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none text-sm w-64"
@@ -396,10 +353,10 @@ export default function PlannerPage() {
                         {/* View Switcher */}
                         <div className="flex flex-1 md:flex-none items-center justify-center bg-white rounded-xl border border-gray-200 p-1 shadow-sm">
                             <button onClick={() => setViewMode('calendar')} className={clsx("flex-1 md:flex-none p-2 md:px-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-bold", viewMode === 'calendar' ? "bg-green-100 text-green-700 shadow-sm" : "text-gray-500 hover:bg-gray-50")}>
-                                <CalendarIcon className="w-4 h-4" /> <span className="md:inline">{t('planner.calendar')}</span>
+                                <CalendarIcon className="w-4 h-4" /> <span className="md:inline">{t('planner.viewCalendar')}</span>
                             </button>
                             <button onClick={() => setViewMode('list')} className={clsx("flex-1 md:flex-none p-2 md:px-3 rounded-lg transition-all flex items-center justify-center gap-2 text-sm font-bold", viewMode === 'list' ? "bg-green-100 text-green-700 shadow-sm" : "text-gray-500 hover:bg-gray-50")}>
-                                <List className="w-4 h-4" /> <span className="md:inline">{t('planner.list')}</span>
+                                <List className="w-4 h-4" /> <span className="md:inline">{t('planner.viewList')}</span>
                             </button>
                         </div>
 
@@ -416,7 +373,7 @@ export default function PlannerPage() {
                                     "p-2.5 rounded-xl transition-all border flex items-center justify-center gap-2 shadow-sm",
                                     showAIPanel ? "bg-green-50 text-green-700 border-green-200" : "bg-white text-gray-500 border-gray-200 hover:bg-gray-50"
                                 )}
-                                title={showAIPanel ? "Hide AI Insights" : "Show AI Insights"}
+                                title={showAIPanel ? t('planner.toggleAI') : t('planner.toggleAI')}
                             >
                                 {showAIPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                                 <span className="hidden lg:inline font-medium text-sm">{t('planner.aiInsights')}</span>
@@ -432,7 +389,7 @@ export default function PlannerPage() {
                             <div className="mb-6">
                                 <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex justify-between items-center">
                                     {t('planner.selectField')}
-                                    <span title="Filter plan by specific field"><HelpCircle className="w-3 h-3 text-gray-400 cursor-pointer" /></span>
+                                    <span title={t('planner.filterFieldTooltip')}><HelpCircle className="w-3 h-3 text-gray-400 cursor-pointer" /></span>
                                 </h3>
                                 <div className="space-y-2">
                                     <button
@@ -440,7 +397,7 @@ export default function PlannerPage() {
                                         className={clsx("w-full text-left p-3 rounded-xl transition-all border", selectedPlot === 'all' ? "bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200 shadow-sm" : "bg-white/40 border-transparent hover:bg-white hover:shadow-sm")}
                                     >
                                         <span className="font-semibold text-gray-800 block">{t('planner.allFields')}</span>
-                                        <span className="text-xs text-gray-500">Overview Mode</span>
+                                        <span className="text-xs text-gray-500">{t('planner.overviewMode')}</span>
                                     </button>
                                     {uniquePlots.map(plot => (
                                         <button
@@ -475,7 +432,7 @@ export default function PlannerPage() {
                                 <div className="flex flex-col gap-2">
                                     <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer hover:bg-white/50 p-2 rounded-lg transition">
                                         <input type="checkbox" checked={aiFilterOnly} onChange={e => setAiFilterOnly(e.target.checked)} className="rounded text-green-600 focus:ring-green-500" />
-                                        Show AI Pending Tasks Only
+                                        {t('planner.aiFilterLabel')}
                                     </label>
                                 </div>
                             </div>
@@ -484,9 +441,9 @@ export default function PlannerPage() {
                             <div className="p-4 bg-white/40 rounded-xl border border-white/50 mb-6">
                                 <h4 className="text-xs font-bold text-gray-500 mb-2">{t('planner.legend')}</h4>
                                 <div className="space-y-2 text-xs">
-                                    <div className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-600" /> Done</div>
-                                    <div className="flex items-center gap-2"><ClockIcon className="w-3 h-3 text-yellow-600" /> Pending</div>
-                                    <div className="flex items-center gap-2"><AlertTriangle className="w-3 h-3 text-red-600" /> Risk Alert</div>
+                                    <div className="flex items-center gap-2"><CheckCircle className="w-3 h-3 text-green-600" /> {t('status.done')}</div>
+                                    <div className="flex items-center gap-2"><ClockIcon className="w-3 h-3 text-yellow-600" /> {t('status.pending')}</div>
+                                    <div className="flex items-center gap-2"><AlertTriangle className="w-3 h-3 text-red-600" /> {t('dashboard.riskAlerts')}</div>
                                 </div>
                             </div>
 
@@ -496,12 +453,12 @@ export default function PlannerPage() {
                                 <div className="relative z-10">
                                     <div className="flex items-center gap-2 mb-3">
                                         <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                                        <span className="text-[10px] font-black text-white uppercase tracking-widest">Sarthi Core Status</span>
+                                        <span className="text-[10px] font-black text-white uppercase tracking-widest">{t('planner.agent.coreStatus')}</span>
                                     </div>
                                     <div className="text-[10px] text-white/50 font-mono space-y-1">
-                                        <div className="flex justify-between"><span>Connectivity</span> <span className="text-emerald-400">Stable</span></div>
-                                        <div className="flex justify-between"><span>Model</span> <span className="text-white">v2.1-Agri</span></div>
-                                        <div className="flex justify-between"><span>Sync</span> <span className="text-blue-400">Live</span></div>
+                                        <div className="flex justify-between"><span>{t('planner.agent.connectivity')}</span> <span className="text-emerald-400">{t('planner.agent.status.stable')}</span></div>
+                                        <div className="flex justify-between"><span>{t('planner.agent.model')}</span> <span className="text-white">v2.1-Agri</span></div>
+                                        <div className="flex justify-between"><span>{t('planner.agent.sync')}</span> <span className="text-blue-400">{t('planner.agent.status.live')}</span></div>
                                     </div>
                                     <div className="mt-4 pt-4 border-t border-white/5">
                                         <p className="text-[9px] text-emerald-400/80 italic font-mono leading-tight">
@@ -528,26 +485,26 @@ export default function PlannerPage() {
                                     <div className="p-4 flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <div className="px-2 py-0.5 bg-emerald-500/20 text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-full border border-emerald-500/30">
-                                                Active Directive
+                                                {t('planner.activeDirective')}
                                             </div>
                                             <span className="text-xs text-white/40 font-mono">ID: AUTON-2026-{format(currentMonth, 'MMM').toUpperCase()}</span>
                                         </div>
                                         <h3 className="text-lg font-bold text-white tracking-tight flex items-center gap-2 leading-none">
-                                            Sarthi's Strategic Objective: <span className="text-emerald-400 font-serif italic text-xl">{strategy.objective}</span>
+                                            {t('planner.objectivePrefix')} <span className="text-emerald-400 font-serif italic text-xl">{strategy.objective}</span>
                                         </h3>
                                         <p className="text-sm text-white/60 mt-2 leading-relaxed max-w-2xl font-medium">
-                                            "For {format(currentMonth, 'MMMM')} 2026, my autonomous logic is <span className="text-white">{strategy.desc}</span>"
+                                            "{t('planner.descPrefix')} {format(currentMonth, 'MMMM')} 2026, {t('planner.descSuffix')} <span className="text-white">{strategy.desc}</span>"
                                         </p>
                                     </div>
                                     <div className="flex md:flex-col gap-2 p-4 border-t md:border-t-0 md:border-l border-white/10 shrink-0">
                                         <div className="flex items-center gap-3">
                                             <div className="w-10 h-10 rounded-2xl bg-white/5 flex flex-col items-center justify-center border border-white/10">
                                                 <span className="text-emerald-400 font-black text-xs leading-none">{strategy.completion}%</span>
-                                                <span className="text-[8px] text-white/30 uppercase mt-1">Auton</span>
+                                                <span className="text-[8px] text-white/30 uppercase mt-1">{t('planner.auton')}</span>
                                             </div>
                                             <div className="w-10 h-10 rounded-2xl bg-white/5 flex flex-col items-center justify-center border border-white/10">
                                                 <span className="text-blue-400 font-black text-xs leading-none">12</span>
-                                                <span className="text-[8px] text-white/30 uppercase mt-1">Directs</span>
+                                                <span className="text-[8px] text-white/30 uppercase mt-1">{t('planner.directs')}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -596,8 +553,8 @@ export default function PlannerPage() {
                                             <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                                                 <div className="p-4 space-y-4">
                                                     <div className="flex justify-between items-center text-xs px-1">
-                                                        <span className="text-indigo-900 font-bold flex items-center gap-1"><Activity className="w-3 h-3" /> Live Analysis</span>
-                                                        <button className="text-white bg-indigo-600 px-2 py-0.5 rounded text-[10px] shadow-sm hover:bg-indigo-700 transition">Accept All</button>
+                                                        <span className="text-indigo-900 font-bold flex items-center gap-1"><Activity className="w-3 h-3" /> {t('planner.ai.liveAnalysis')}</span>
+                                                        <button className="text-white bg-indigo-600 px-2 py-0.5 rounded text-[10px] shadow-sm hover:bg-indigo-700 transition">{t('planner.ai.acceptAll')}</button>
                                                     </div>
                                                     {AI_SUGGESTIONS.map(s => (
                                                         <AISuggestionCard key={s.id} suggestion={s} />
@@ -624,12 +581,12 @@ export default function PlannerPage() {
                                                 <div className="p-4">
                                                     <div className="bg-red-50 rounded-xl p-3 border border-red-100 mb-2">
                                                         <div className="flex justify-between items-start mb-1">
-                                                            <div className="font-bold text-red-800 text-xs">High Humidity Risk</div>
-                                                            <span className="bg-red-200 text-red-800 text-[10px] px-1.5 rounded font-bold">HIGH</span>
+                                                            <div className="font-bold text-red-800 text-xs">{t('planner.risk.humidity.title')}</div>
+                                                            <span className="bg-red-200 text-red-800 text-[10px] px-1.5 rounded font-bold">{t('planner.risk.high')}</span>
                                                         </div>
-                                                        <p className="text-xs text-red-700 leading-tight mb-2 font-medium">Jan 10-12: High chance of fungal infection.</p>
+                                                        <p className="text-xs text-red-700 leading-tight mb-2 font-medium">{t('planner.risk.humidity.desc')}</p>
                                                         <button className="w-full bg-white border border-red-200 text-red-700 text-xs font-bold py-2 rounded-lg hover:bg-red-50 transition shadow-sm flex items-center justify-center gap-1">
-                                                            <Plus className="w-3 h-3" /> Add Fungicide Task
+                                                            <Plus className="w-3 h-3" /> {t('planner.risk.addAction')}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -652,11 +609,11 @@ export default function PlannerPage() {
                                         {openPanels.budget && (
                                             <motion.div initial={{ height: 0 }} animate={{ height: 'auto' }} exit={{ height: 0 }} className="overflow-hidden">
                                                 <div className="p-4 space-y-2">
-                                                    <BudgetRow label="Seeds" cost="₹1,800" />
-                                                    <BudgetRow label="Fertilizer" cost="₹2,400" savings="₹350 saved" />
-                                                    <BudgetRow label="Labor" cost="₹5,000" />
+                                                    <BudgetRow label={t('planner.budget.seeds')} cost="₹1,800" />
+                                                    <BudgetRow label={t('planner.budget.fertilizer')} cost="₹2,400" savings={`₹350 ${t('planner.budget.saved')}`} />
+                                                    <BudgetRow label={t('planner.budget.labor')} cost="₹5,000" />
                                                     <div className="pt-2 border-t border-gray-200 mt-2 flex justify-between items-center font-bold text-gray-800 text-sm">
-                                                        <span>Total</span>
+                                                        <span>{t('planner.budget.total')}</span>
                                                         <span>₹9,200</span>
                                                     </div>
                                                 </div>
@@ -694,10 +651,6 @@ export default function PlannerPage() {
                         <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition" title="Export Plan">
                             <Download className="w-4 h-4" />
                             <span className="hidden sm:inline">{t('planner.export')}</span>
-                        </button>
-                        <button className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-bold shadow-lg shadow-indigo-200 transition">
-                            <Sprout className="w-4 h-4" />
-                            {t('planner.acceptAll')}
                         </button>
                     </div>
                 </footer>
@@ -798,7 +751,7 @@ function CalendarComponent({ tasks, month, onNavigate, onTaskClick, cropData, pl
                                 <span className={clsx("text-sm font-bold block", isTodayDate ? "text-indigo-600" : "text-gray-500")}>
                                     {format(day, 'd')}
                                 </span>
-                                {risk && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title="Risk Alert!" />}
+                                {risk && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" title={t('dashboard.riskAlerts')} />}
                             </div>
 
                             <div className="space-y-1 flex-1 overflow-y-auto scrollbar-none">
@@ -825,13 +778,13 @@ function CalendarComponent({ tasks, month, onNavigate, onTaskClick, cropData, pl
                                                     {task.isAISuggestion && (
                                                         <div className="flex items-center gap-1 px-1.5 py-0.5 bg-indigo-500 text-white text-[8px] font-black rounded-full uppercase tracking-tighter animate-pulse shadow-sm">
                                                             <BrainCircuit className="w-2 h-2" />
-                                                            Agent-Led
+                                                            {t('planner.ai.agentLed')}
                                                         </div>
                                                     )}
                                                     {task.status === 'risk' && (
                                                         <div className="px-1.5 py-0.5 bg-red-500 text-white text-[8px] font-black rounded-full uppercase tracking-tighter flex items-center gap-1">
                                                             <Activity className="w-2 h-2" />
-                                                            Priority
+                                                            {t('planner.priority')}
                                                         </div>
                                                     )}
                                                 </div>
@@ -844,7 +797,7 @@ function CalendarComponent({ tasks, month, onNavigate, onTaskClick, cropData, pl
 
                                         <div className="pl-2 flex flex-col gap-1 mt-1 text-[10px] text-gray-500 font-medium">
                                             <span className="text-gray-600 break-words leading-tight">
-                                                {plots.find(p => p.id === task.plotId)?.name || 'Unknown'}
+                                                {plots.find(p => p.id === task.plotId)?.name || t('planner.unknown')}
                                             </span>
                                             <span className="font-mono text-gray-700 bg-black/5 px-1.5 py-0.5 rounded w-fit">₹{task.cost}</span>
                                         </div>
@@ -874,6 +827,7 @@ function CalendarComponent({ tasks, month, onNavigate, onTaskClick, cropData, pl
 // --- Component: List View ---
 
 function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[], onSort: (k: string) => void, sortConfig: any, plots: Plot[] }) {
+    const { t } = useTranslation();
     const SortIcon = ({ colKey }: { colKey: string }) => {
         if (sortConfig?.key !== colKey) return <div className="w-3 h-3" />; // spacer
         return sortConfig.direction === 'asc' ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />;
@@ -886,11 +840,11 @@ function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[]
                     <thead className="bg-slate-50/50 border-b border-indigo-100/50">
                         <tr>
                             {[
-                                { label: 'Date', key: 'date' },
-                                { label: 'Task Details', key: 'title' },
-                                { label: 'Field / Crop', key: 'plotId' },
-                                { label: 'Est. Cost', key: 'cost' },
-                                { label: 'Status', key: 'status' }
+                                { label: t('planner.list.date'), key: 'date' },
+                                { label: t('planner.list.taskDetails'), key: 'title' },
+                                { label: t('planner.list.fieldCrop'), key: 'plotId' },
+                                { label: t('planner.list.estCost'), key: 'cost' },
+                                { label: t('planner.list.status'), key: 'status' }
                             ].map(col => (
                                 <th key={col.key} onClick={() => onSort(col.key)} className="text-left py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition">
                                     <div className="flex items-center gap-2">
@@ -899,7 +853,7 @@ function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[]
                                     </div>
                                 </th>
                             ))}
-                            <th className="text-right py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">Action</th>
+                            <th className="text-right py-4 px-6 text-xs font-bold text-gray-400 uppercase tracking-wider">{t('planner.list.action')}</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -917,7 +871,7 @@ function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[]
                                                 {task.isAISuggestion && (
                                                     <span className="flex items-center gap-1 px-1.5 py-0.5 bg-indigo-50 text-indigo-600 text-[10px] font-black rounded-lg border border-indigo-100 uppercase tracking-tighter shadow-sm">
                                                         <BrainCircuit className="w-3 h-3" />
-                                                        Sarthi Logic
+                                                        {t('planner.ai.sarthiLogic')}
                                                     </span>
                                                 )}
                                             </div>
@@ -926,7 +880,7 @@ function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[]
                                     </div>
                                 </td>
                                 <td className="py-4 px-6 text-sm text-gray-600">
-                                    {plots.find(p => p.id === task.plotId)?.name || 'Unknown Plot'}
+                                    {plots.find(p => p.id === task.plotId)?.name || t('planner.unknownPlot')}
                                 </td>
                                 <td className="py-4 px-6 text-sm text-gray-600 font-mono">
                                     ₹{task.cost}
@@ -951,10 +905,11 @@ function ListViewComponent({ tasks, onSort, sortConfig, plots }: { tasks: Task[]
 // --- Component: AI Suggestion Card ---
 
 function AISuggestionCard({ suggestion }: { suggestion: AISuggestion }) {
+    const { t } = useTranslation();
     const [showReason, setShowReason] = useState(false);
     return (
         <div className="bg-white p-4 rounded-2xl border border-indigo-100 shadow-sm relative group hover:shadow-lg hover:border-indigo-300 transition-all">
-            <div className="absolute top-2 right-4 text-[10px] font-black text-indigo-200 uppercase tracking-widest group-hover:text-indigo-400">SARTHI-LOGIC</div>
+            <div className="absolute top-2 right-4 text-[10px] font-black text-indigo-200 uppercase tracking-widest group-hover:text-indigo-400">{t('planner.ai.sarthiLogic')}</div>
             <h4 className="text-sm font-bold text-gray-800 mb-1 capitalize flex items-center gap-2">
                 {suggestion.type === 'reschedule' && <CalendarIcon className="w-3.5 h-3.5 text-orange-500" />}
                 {suggestion.type === 'optimization' && <DollarSign className="w-3.5 h-3.5 text-emerald-500" />}
@@ -969,7 +924,7 @@ function AISuggestionCard({ suggestion }: { suggestion: AISuggestion }) {
             </p>
             {suggestion.impact && (
                 <div className="text-[10px] font-black text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full w-fit mb-3 border border-emerald-100 uppercase tracking-tighter">
-                    Impact: {suggestion.impact}
+                    {t('planner.ai.impact')}: {suggestion.impact}
                 </div>
             )}
 
@@ -977,12 +932,12 @@ function AISuggestionCard({ suggestion }: { suggestion: AISuggestion }) {
                 onClick={() => setShowReason(!showReason)}
                 className="text-[10px] text-indigo-400 font-bold hover:text-indigo-600 mb-3 flex items-center gap-1 transition-colors"
             >
-                View Operational Logic {showReason ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                {t('planner.ai.viewLogic')} {showReason ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
             <AnimatePresence>
                 {showReason && (
                     <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="text-[10px] text-indigo-900 bg-indigo-50/50 p-2.5 rounded-xl mb-3 leading-relaxed font-medium border border-indigo-100/50">
-                        <span className="text-[9px] uppercase font-bold text-indigo-400 block mb-1">Agent Reasoning Path</span>
+                        <span className="text-[9px] uppercase font-bold text-indigo-400 block mb-1">{t('planner.ai.reasoningPath')}</span>
                         {suggestion.reasoning}
                     </motion.div>
                 )}
@@ -990,10 +945,10 @@ function AISuggestionCard({ suggestion }: { suggestion: AISuggestion }) {
 
             <div className="flex gap-2 mt-4">
                 <button className="flex-1 text-[10px] font-black bg-indigo-600 text-white px-3 py-2 rounded-xl hover:bg-indigo-700 transition shadow-md shadow-indigo-600/20 active:scale-95">
-                    Endorse Directive
+                    {t('planner.ai.endorse')}
                 </button>
                 <button className="px-3 py-2 text-[10px] font-bold text-slate-400 hover:text-slate-600 transition uppercase tracking-tighter">
-                    Dismiss
+                    {t('planner.ai.dismiss')}
                 </button>
             </div>
         </div>
@@ -1007,7 +962,11 @@ function AISuggestionCard({ suggestion }: { suggestion: AISuggestion }) {
 // --- Component: Add Task Modal ---
 
 function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropData: any[], plots: Plot[] }) {
-    const steps = ['Select Field', 'Select Crop', 'Task Details'];
+    const { t } = useTranslation();
+    const steps = t('planner.modal.steps', { returnObjects: true });
+    // Safe cast or fallback
+    const stepLabels = Array.isArray(steps) ? steps : ['Select Field', 'Select Crop', 'Task Details'];
+
     const [step, setStep] = useState(0);
     const [selectedCrop, setSelectedCrop] = useState<string>('');
     const [taskType, setTaskType] = useState<string>(''); // e.g., 'Sowing', 'Harvesting', 'Others'
@@ -1029,7 +988,7 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
             if (!selectedCropData.sowingMonths.includes(selectedMonth)) {
                 return {
                     isValid: false,
-                    message: `Invalid Sowing Date! ${selectedCrop} can only be sown in: ${selectedCropData.sowingMonths.join(', ')}`
+                    message: `${t('planner.modal.error.sowingDate')} ${selectedCrop} ${t('planner.modal.error.sowingRange')}: ${selectedCropData.sowingMonths.join(', ')}`
                 };
             }
         }
@@ -1037,7 +996,7 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
             if (!selectedCropData.harvestMonths.includes(selectedMonth)) {
                 return {
                     isValid: false,
-                    message: `Invalid Harvest Date! ${selectedCrop} is harvested in: ${selectedCropData.harvestMonths.join(', ')}`
+                    message: `${t('planner.modal.error.harvestDate')} ${selectedCrop} ${t('planner.modal.error.harvestRange')}: ${selectedCropData.harvestMonths.join(', ')}`
                 };
             }
         }
@@ -1050,33 +1009,46 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
             <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="font-bold text-gray-800">Add New Task</h3>
+                    <h3 className="font-bold text-gray-800">{t('planner.modal.addTaskTitle')}</h3>
                     <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-gray-600" /></button>
                 </div>
 
                 <div className="p-6">
                     {/* Step Indicator */}
                     <div className="flex gap-2 mb-6">
-                        {steps.map((s, i) => (
-                            <div key={s} className={clsx("flex-1 h-1 rounded-full", i <= step ? "bg-green-500" : "bg-gray-200")} />
+                        {stepLabels.map((s: string, i: number) => (
+                            <div key={i} className="flex-1">
+                                <div className={clsx("h-1 rounded-full mb-2 transition-all", i <= step ? "bg-green-500" : "bg-gray-200")} />
+                                <span className={clsx("text-[10px] font-bold uppercase tracking-wider block text-center", i <= step ? "text-green-600" : "text-gray-400")}>{s}</span>
+                            </div>
                         ))}
                     </div>
 
-                    <div className="min-h-[200px]">
+                    <div className="min-h-[280px]">
                         {step === 0 && (
-                            <div className="space-y-3">
-                                <h4 className="font-semibold text-gray-700 mb-4">Which field is this task for?</h4>
-                                {plots.map(p => (
-                                    <button key={p.id} onClick={() => setStep(1)} className="w-full text-left p-3 rounded-xl border border-gray-200 hover:border-green-500 hover:bg-green-50 transition flex items-center justify-between group">
-                                        <span className="font-medium text-gray-700 group-hover:text-green-800">{p.name}</span>
-                                        <span className="text-xl">{p.image}</span>
-                                    </button>
-                                ))}
+                            <div className="space-y-4">
+                                <h4 className="text-sm font-medium text-gray-600 mb-2">{t('planner.modal.selectFieldQuestion')}</h4>
+                                <div className="grid grid-cols-1 gap-3">
+                                    {plots.map(plot => (
+                                        <button
+                                            key={plot.id}
+                                            onClick={() => setStep(1)}
+                                            className="flex items-center gap-4 p-3 rounded-xl border border-gray-200 hover:border-green-500 hover:bg-green-50 transition group text-left"
+                                        >
+                                            <div className="text-2xl">{plot.image}</div>
+                                            <div>
+                                                <div className="font-bold text-gray-800">{plot.name}</div>
+                                                <div className="text-xs text-gray-500">{plot.crop}</div>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-gray-300 ml-auto group-hover:text-green-500" />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         )}
                         {step === 1 && (
                             <div className="space-y-3">
-                                <h4 className="font-semibold text-gray-700 mb-4">Select Crop</h4>
+                                <h4 className="text-sm font-medium text-gray-600 mb-2">{t('planner.modal.selectCrop')}</h4>
                                 <div className="max-h-60 overflow-y-auto space-y-2 pr-2 scrollbar-thin scrollbar-thumb-gray-200">
                                     {cropData.map(c => (
                                         <button
@@ -1094,12 +1066,12 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
                         {step === 2 && (
                             <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Task Type</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('planner.modal.taskType')}</label>
                                     <select
                                         className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                                         onChange={(e) => setTaskType(e.target.value)}
                                     >
-                                        <option value="">Select Type...</option>
+                                        <option value="">{t('planner.modal.selectTypePlaceholder')}</option>
                                         <option value="Sowing">Sowing</option>
                                         <option value="Harvesting">Harvesting</option>
                                         <option value="Irrigation">Irrigation</option>
@@ -1111,22 +1083,22 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
                                 {taskType === 'Sowing' && selectedCropData && (
                                     <div className="text-xs text-blue-600 bg-blue-50 p-2 rounded flex items-start gap-2">
                                         <Info className="w-4 h-4 shrink-0" />
-                                        <span>Recommended Sowing: <strong>{selectedCropData.sowingMonths.join(', ')}</strong></span>
+                                        <span>{t('planner.modal.recommendedSowing')}: <strong>{selectedCropData.sowingMonths.join(', ')}</strong></span>
                                     </div>
                                 )}
                                 {taskType === 'Harvesting' && selectedCropData && (
                                     <div className="text-xs text-amber-600 bg-amber-50 p-2 rounded flex items-start gap-2">
                                         <Info className="w-4 h-4 shrink-0" />
-                                        <span>Expected Harvest: <strong>{selectedCropData.harvestMonths.join(', ')}</strong></span>
+                                        <span>{t('planner.modal.expectedHarvest')}: <strong>{selectedCropData.harvestMonths.join(', ')}</strong></span>
                                     </div>
                                 )}
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Task Name</label>
-                                    <input type="text" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder={taskType ? `${taskType} ${selectedCrop}` : "e.g. Activity"} />
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('planner.modal.taskName')}</label>
+                                    <input type="text" className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" placeholder={taskType ? `${taskType} ${selectedCrop}` : t('planner.modal.taskNamePlaceholder')} />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('planner.modal.date')}</label>
                                     <input
                                         type="date"
                                         className={clsx(
@@ -1142,7 +1114,7 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
                                             {validation.message}
                                         </p>
                                     ) : (
-                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><Sprout className="w-3 h-3" /> AI suggests best dates based on weather & soil.</p>
+                                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1"><Sprout className="w-3 h-3" /> {t('planner.modal.aiDateHint')}</p>
                                     )}
                                 </div>
                             </div>
@@ -1156,10 +1128,10 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
                         disabled={step === 0}
                         className="px-4 py-2 text-gray-500 font-medium hover:bg-gray-100 rounded-lg disabled:opacity-50"
                     >
-                        Back
+                        {t('planner.modal.back')}
                     </button>
                     {step < 2 ? (
-                        <button className="px-4 py-2 bg-gray-100 text-gray-400 font-medium rounded-lg cursor-not-allowed">Next</button>
+                        <button className="px-4 py-2 bg-gray-100 text-gray-400 font-medium rounded-lg cursor-not-allowed">{t('planner.modal.next')}</button>
                     ) : (
                         <button
                             onClick={onClose}
@@ -1171,7 +1143,7 @@ function AddTaskModal({ onClose, cropData, plots }: { onClose: () => void, cropD
                                     : "bg-green-600 text-white hover:bg-green-700 shadow-green-500/20"
                             )}
                         >
-                            Create Task
+                            {t('planner.modal.createTask')}
                         </button>
                     )}
                 </div>
@@ -1195,11 +1167,12 @@ function BudgetRow({ label, cost, savings }: { label: string, cost: string, savi
 }
 
 function StatusBadge({ status }: { status: string }) {
+    const { t } = useTranslation();
     const config = {
-        done: { color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle, label: 'Done' },
-        pending: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock, label: 'Pending' },
-        upcoming: { color: 'bg-blue-50 text-blue-700 border-blue-100', icon: CalendarIcon, label: 'Upcoming' },
-        risk: { color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle, label: 'Risk' }
+        done: { color: 'bg-green-100 text-green-700 border-green-200', icon: CheckCircle, label: t('status.completed') },
+        pending: { color: 'bg-yellow-50 text-yellow-700 border-yellow-200', icon: Clock, label: t('status.pending') },
+        upcoming: { color: 'bg-blue-50 text-blue-700 border-blue-100', icon: CalendarIcon, label: t('status.upcoming') },
+        risk: { color: 'bg-red-100 text-red-700 border-red-200', icon: AlertTriangle, label: t('dashboard.riskAlerts') }
     }[status] || { color: 'bg-gray-100', icon: Info, label: status };
 
     const Icon = config.icon;
