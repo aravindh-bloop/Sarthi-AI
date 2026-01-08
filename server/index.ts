@@ -3,7 +3,7 @@ import cors from 'cors';
 import { db as database, initDB as initializeDB } from './db';
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 const WEATHER_API_KEY = 'sk-live-lrWkpHf0YrfgHpEyoxUUqViWBagNDouUfREndGng'; // User Provided Key
 
 app.use(cors());

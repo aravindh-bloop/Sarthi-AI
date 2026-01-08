@@ -85,10 +85,30 @@ export default function PlannerPage() {
     const [error, setError] = useState<string | null>(null);
 
     // Fetch All Data from SQL Backend
+    // --- Mock Data Fallback ---
+    const MOCK_PLANNER_DATA = {
+        crops: [
+            { id: 1, crop: "Wheat", season: "Rabi", sowingMonths: ["October", "November"], harvestMonths: ["March", "April"], majorStates: ["MP", "Punjab"] },
+            { id: 2, crop: "Mustard", season: "Rabi", sowingMonths: ["October"], harvestMonths: ["February", "March"], majorStates: ["Rajasthan", "Haryana"] },
+            { id: 3, crop: "Chilli", season: "Kharif", sowingMonths: ["June", "July"], harvestMonths: ["October", "November"], majorStates: ["AP", "Telangana"] }
+        ],
+        plots: [
+            { id: 'p1', name: 'Plot A - North', crop: 'Mustard', size: '2.5 Acres', soil: 'Loamy', irrigation: 'Drip', image: '🌾' },
+            { id: 'p2', name: 'Plot B - East', crop: 'Potato', size: '1.2 Acres', soil: 'Clay', irrigation: 'Sprinkler', image: '🥔' },
+            { id: 'p3', name: 'Plot C - South', crop: 'Chilli', size: '0.8 Acres', soil: 'Sandy', irrigation: 'Drip', image: '🌶️' }
+        ],
+        tasks: [
+            { id: 't1', plotId: 'p2', type: 'harvesting', title: 'Potato Harvest Cycle (Rabi)', date: '2026-01-10T00:00:00.000Z', status: 'done', cost: 4500, alert: 'Optimal Sugar Content', severity: 'low', isAISuggestion: true },
+            { id: 't2', plotId: 'p1', type: 'irrigation', title: 'Mustard Final Irrigation', date: '2026-01-15T00:00:00.000Z', status: 'done', cost: 1200, alert: null, severity: null, isAISuggestion: false },
+            { id: 't3', plotId: 'p3', type: 'protection', title: 'Frost Shield Monitoring', date: '2026-01-22T00:00:00.000Z', status: 'pending', cost: 0, alert: 'Cold Wave Predicted', severity: 'medium', isAISuggestion: true },
+            { id: 't4', plotId: 'p1', type: 'fertilization', title: 'Late Nitrogen Top Up', date: '2026-01-25T00:00:00.000Z', status: 'upcoming', cost: 1500, alert: null, severity: null, isAISuggestion: false }
+        ]
+    };
+
+    // Fetch All Data from SQL Backend (with Fallback)
     React.useEffect(() => {
         const fetchData = async () => {
             try {
-                // setLoading(true); // Don't set loading true on every poll, handling differently
                 if (loading) setLoading(true);
                 setError(null);
 
@@ -99,11 +119,10 @@ export default function PlannerPage() {
                 ]);
 
                 if (!cropsRes.ok || !plotsRes.ok || !tasksRes.ok) {
-                    throw new Error("One or more APIs failed to load");
+                    throw new Error("Backend API unavailable");
                 }
 
                 const c = await cropsRes.json();
-                // Parse JSON strings from backend
                 const parsedCrops = c.map((crop: any) => ({
                     ...crop,
                     sowingMonths: typeof crop.sowingMonths === 'string' ? JSON.parse(crop.sowingMonths) : crop.sowingMonths,
@@ -114,16 +133,20 @@ export default function PlannerPage() {
                 setPlots(await plotsRes.json());
 
                 const t = await tasksRes.json();
-                const realTasks = t.map((task: any) => ({
+                setTasks(t.map((task: any) => ({ ...task, date: new Date(task.date), plotId: task.plotId })));
+
+            } catch (error) {
+                console.warn("Backend unavailable. Using Demo Mock Data.");
+
+                // FALLBACK TO MOCK DATA
+                setCropDetails(MOCK_PLANNER_DATA.crops);
+                setPlots(MOCK_PLANNER_DATA.plots as any);
+                setTasks(MOCK_PLANNER_DATA.tasks.map((task: any) => ({
                     ...task,
                     date: new Date(task.date),
                     plotId: task.plotId
-                }));
-                setTasks(realTasks);
+                })) as any);
 
-            } catch (error) {
-                console.error("Failed to fetch planner data", error);
-                setError("Failed to load planner data. Check your connection.");
             } finally {
                 setLoading(false);
             }

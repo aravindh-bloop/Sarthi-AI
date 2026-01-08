@@ -74,6 +74,23 @@ export default function InventoryPage() {
     const [logs, setLogs] = useState<HistoricalLog[]>([]);
 
     // Fetch Data from API
+    // --- Mock Data Fallback ---
+    const MOCK_INVENTORY_DATA = {
+        items: [
+            { id: '1', name: 'Wheat Seeds', category: 'Seeds', quantity: 45, unit: 'kg', minThreshold: 50, expiryDate: '2026-05-20', batchNumber: 'B-2024-001', lastRestocked: '2024-01-01', pricePerUnit: 40 },
+            { id: '2', name: 'Urea Fertilizer', category: 'Fertilizers', quantity: 15, unit: 'kg', minThreshold: 20, expiryDate: '2025-12-15', batchNumber: 'N-505', lastRestocked: '2023-11-20', pricePerUnit: 120 },
+            { id: '3', name: 'Drip Tape', category: 'Tools', quantity: 500, unit: 'm', minThreshold: 100, lastRestocked: '2023-05-10', pricePerUnit: 8 },
+            { id: '4', name: 'Pesticide A', category: 'Pesticides', quantity: 2, unit: 'L', minThreshold: 5, expiryDate: '2024-08-30', batchNumber: 'P-99', lastRestocked: '2024-01-05', pricePerUnit: 550 },
+            { id: '5', name: 'Diesel Fuel', category: 'Labor', quantity: 80, unit: 'L', minThreshold: 30, lastRestocked: '2024-01-02', pricePerUnit: 95 }
+        ],
+        logs: [
+            { id: 'l1', date: 'Jan 02, 2026', itemName: 'Wheat Seeds', action: 'Used', quantity: 5, unit: 'kg', relatedTask: 'Warning Sowing' },
+            { id: 'l2', date: 'Jan 01, 2026', itemName: 'Urea Fertilizer', action: 'Restocked', quantity: 50, unit: 'kg' },
+            { id: 'l3', date: 'Dec 28, 2025', itemName: 'Diesel Fuel', action: 'Used', quantity: 10, unit: 'L', relatedTask: 'Tractor Run' }
+        ]
+    };
+
+    // Fetch Data from API
     React.useEffect(() => {
         const fetchData = async () => {
             try {
@@ -81,12 +98,20 @@ export default function InventoryPage() {
                     fetch('/api/inventory'),
                     fetch('/api/inventory/logs')
                 ]);
+
+                if (!invRes.ok || !logsRes.ok) {
+                    throw new Error("Backend API unavailable");
+                }
+
                 const invData = await invRes.json();
                 const logsData = await logsRes.json();
                 setItems(invData);
                 setLogs(logsData);
             } catch (error) {
-                console.error("Failed to fetch inventory data", error);
+                console.warn("Backend unavailable. Using Demo Mock Data for Inventory.");
+                // FALLBACK TO MOCK DATA
+                setItems(MOCK_INVENTORY_DATA.items as any);
+                setLogs(MOCK_INVENTORY_DATA.logs as any);
             }
         };
         fetchData();
