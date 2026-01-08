@@ -83,7 +83,7 @@ export default function CropHealthPage() {
     const [context, setContext] = useState<CropContext>({ cropName: '', growthStage: '', fieldId: '' });
     const [result, setResult] = useState<AnalysisResult | null>(null);
     const [tickets, setTickets] = useState<SupportTicket[]>([]);
-    const [error, setError] = useState<string | null>(null);
+    const [, setError] = useState<string | null>(null);
 
     const resultRef = useRef<HTMLDivElement>(null);
 
