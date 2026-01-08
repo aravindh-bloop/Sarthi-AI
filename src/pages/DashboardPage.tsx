@@ -644,6 +644,42 @@ export default function DashboardPage() {
     const [dataLoading, setDataLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
+    // --- MOCK DATA FOR FALLBACK ---
+    const MOCK_DATA = {
+        stats: {
+            kpi: { activeCrops: 4, totalPlots: 6, todayTasks: 3, completedTasks: 1, budgetUsed: 14500 },
+            alerts: [
+                { id: 'a1', category: 'cropHealth', type: 'Pest Risk', target: 'Plot C (Chilli)', action: 'Monitor', level: 'medium' },
+                { id: 'a2', category: 'weather', type: 'High Wind', target: 'Farm Wide', action: 'Secure setup', level: 'low' }
+            ],
+            farmStatus: {
+                health: [
+                    { field: 'Plot A - North', crop: 'Mustard', status: 'healthy', area: '2.5 Acres' },
+                    { field: 'Plot B - East', crop: 'Potato', status: 'warning', area: '1.2 Acres' },
+                    { field: 'Plot C - South', crop: 'Chilli', status: 'healthy', area: '0.8 Acres' },
+                    { field: 'Greenhouse 1', crop: 'Peppers', status: 'ok', area: '0.5 Acres' }
+                ],
+                stock: [
+                    { name: 'Urea Fertilizer', level: 15, status: 'low', unit: 'kg' },
+                    { name: 'Diesel Fuel', level: 40, status: 'ok', unit: 'L' }
+                ]
+            }
+        },
+        tasks: [
+            { id: 't1', plotId: 'p1', type: 'irrigation', title: 'Mustard Final Irrigation', date: new Date().toISOString(), status: 'pending', cost: 1200, isAISuggestion: false },
+            { id: 't2', plotId: 'p2', type: 'harvesting', title: 'Potato Harvest Cycle', date: new Date().toISOString(), status: 'done', cost: 4500, isAISuggestion: true },
+            { id: 't3', plotId: 'p3', type: 'protection', title: 'Frost Shield Monitoring', date: new Date(Date.now() + 86400000).toISOString(), status: 'upcoming', cost: 0, isAISuggestion: true },
+        ],
+        weather: {
+            current: { temp: 24, humidity: 55, condition: "Sunny", windSpeed: 12 },
+            forecast: [
+                { day: "Mon", temp: 25, condition: "Sunny" },
+                { day: "Tue", temp: 27, condition: "Cloudy" }
+            ],
+            alerts: [{ id: 'w1', type: 'heatwave', severity: 'medium', message: 'Temp rising >35°C', suggestedAction: 'Schedule irrigation' }]
+        }
+    };
+
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -656,15 +692,10 @@ export default function DashboardPage() {
                     fetch('/api/weather')
                 ]);
 
-                if (statsRes.ok) {
+                if (statsRes.ok && tasksRes.ok && weatherRes.ok) {
                     const stats = await statsRes.json();
                     setDashboardData(stats);
-                } else {
-                    console.error("Dashboard stats failed:", statsRes.status);
-                    setError("Failed to load dashboard statistics. Please try again.");
-                }
 
-                if (tasksRes.ok) {
                     const t = await tasksRes.json();
                     const formattedTasks = t.map((task: any) => ({
                         ...task,
@@ -672,15 +703,25 @@ export default function DashboardPage() {
                         typeIcon: task.type.charAt(0).toUpperCase() + task.type.slice(1)
                     }));
                     setTasks(formattedTasks);
-                }
 
-                if (weatherRes.ok) {
                     const w = await weatherRes.json();
                     setWeather(w);
+                } else {
+                    // Force Error to trigger Mock Data
+                    throw new Error("Backend unavailable");
                 }
             } catch (error) {
-                console.error("Failed to fetch dashboard data", error);
-                setError("Network connection error. Ensure backend is running.");
+                console.warn("Backend API unavailable. Switching to Demo Mode (Mock Data).");
+                setDashboardData(MOCK_DATA.stats);
+
+                const formattedMockTasks = MOCK_DATA.tasks.map((task: any) => ({
+                    ...task,
+                    timeline: new Date(task.date).toDateString() === new Date().toDateString() ? 'today' : 'week',
+                    typeIcon: task.type.charAt(0).toUpperCase() + task.type.slice(1)
+                }));
+                setTasks(formattedMockTasks);
+
+                setWeather(MOCK_DATA.weather);
             } finally {
                 setDataLoading(false);
             }
