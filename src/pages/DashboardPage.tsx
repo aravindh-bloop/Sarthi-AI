@@ -9,10 +9,12 @@ import {
     CheckCircle, ArrowRight, Activity,
     TrendingUp, TrendingDown, BarChart3,
     Bot, Sparkles, Mic,
-    AlertOctagon, FileText, X
+    AlertOctagon, FileText, X, Loader2
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../context/AuthContext';
+import { useSettings } from '../context/SettingsContext';
 
 // --- COMPONENTS ---
 
@@ -630,50 +632,120 @@ function VoiceAssistant({ isOpen, onClose }: any) {
 export default function DashboardPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
+    const { currentUser } = useAuth();
+    const { settings } = useSettings();
     const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
     const [isMarketModalOpen, setIsMarketModalOpen] = useState(false);
 
-    // --- MOCK DATA WITH TRANSLATIONS ---
-    const KPI_DATA = [
-        { label: t('dashboard.kpi.activeCrops'), value: '3 / 5', sub: t('dashboard.kpi.cropsFields'), icon: Sprout, color: 'emerald' },
-        { label: t('dashboard.kpi.todayTasks'), value: '2 ' + t('dashboard.kpi.pending'), sub: '4 ' + t('dashboard.kpi.completed'), icon: Calendar, color: 'blue' },
-        { label: t('dashboard.kpi.weatherRisk'), value: 'Moderate', sub: t('dashboard.kpi.heatAlert'), icon: AlertTriangle, color: 'amber' },
-        { label: t('dashboard.kpi.budgetUsed'), value: '₹12,500', sub: t('dashboard.kpi.of') + ' ₹20,000', icon: Wallet, color: 'purple' },
-    ];
+    const [dashboardData, setDashboardData] = useState<any>(null);
+    const [tasks, setTasks] = useState<any[]>([]);
+    const [weather, setWeather] = useState<any>(null);
+    const [dataLoading, setDataLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    const FARM_STATUS = {
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                // Reset error on reload
+                setError(null);
+
+                const [statsRes, tasksRes, weatherRes] = await Promise.all([
+                    fetch('/api/dashboard-stats'),
+                    fetch('/api/tasks?limit=10'),
+                    fetch('/api/weather')
+                ]);
+
+                if (statsRes.ok) {
+                    const stats = await statsRes.json();
+                    setDashboardData(stats);
+                } else {
+                    console.error("Dashboard stats failed:", statsRes.status);
+                    setError("Failed to load dashboard statistics. Please try again.");
+                }
+
+                if (tasksRes.ok) {
+                    const t = await tasksRes.json();
+                    const formattedTasks = t.map((task: any) => ({
+                        ...task,
+                        timeline: new Date(task.date).toDateString() === new Date().toDateString() ? 'today' : 'week',
+                        typeIcon: task.type.charAt(0).toUpperCase() + task.type.slice(1)
+                    }));
+                    setTasks(formattedTasks);
+                }
+
+                if (weatherRes.ok) {
+                    const w = await weatherRes.json();
+                    setWeather(w);
+                }
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+                setError("Network connection error. Ensure backend is running.");
+            } finally {
+                setDataLoading(false);
+            }
+        };
+        fetchData();
+    }, []);
+
+    // --- DERIVED DATA ---
+    const KPI_DATA = dashboardData ? [
+        { label: t('dashboard.kpi.activeCrops'), value: `${dashboardData.kpi.activeCrops} / ${dashboardData.kpi.totalPlots}`, sub: t('dashboard.kpi.cropsFields'), icon: Sprout, color: 'emerald' },
+        { label: t('dashboard.kpi.todayTasks'), value: `${dashboardData.kpi.todayTasks} ${t('dashboard.kpi.pending')}`, sub: `${dashboardData.kpi.completedTasks} ${t('dashboard.kpi.completed')}`, icon: Calendar, color: 'blue' },
+        { label: t('dashboard.kpi.weatherRisk'), value: weather?.alerts?.[0]?.severity || 'Low', sub: weather?.current?.condition || t('dashboard.kpi.heatAlert'), icon: AlertTriangle, color: 'amber' },
+        { label: t('dashboard.kpi.budgetUsed'), value: `₹${dashboardData.kpi.budgetUsed}`, sub: t('dashboard.kpi.of') + ' ₹50,000', icon: Wallet, color: 'purple' },
+    ] : [];
+
+    const FARM_STATUS = dashboardData ? {
         season: { name: t('dashboard.farmStatus.rabiSeason'), progress: 42, harvest: 'April 2026' },
-        health: [
-            { field: t('fields.fieldA'), crop: t('crops.wheat'), status: 'healthy', area: '2.5 ' + t('units.acres') },
-            { field: t('fields.fieldB'), crop: t('crops.mustard'), status: 'warning', area: '1.2 ' + t('units.acres') },
-            { field: t('fields.fieldC'), crop: t('crops.potato'), status: 'critical', area: '0.8 ' + t('units.acres') },
-        ],
-        stock: [
-            { name: 'Urea', level: 20, status: 'low', unit: t('units.bags') },
-            { name: 'DAP', level: 85, status: 'ok', unit: t('units.kg') },
-            { name: 'Seeds', level: 60, status: 'ok', unit: t('units.pkts') },
-        ]
-    };
+        health: dashboardData.farmStatus.health,
+        stock: dashboardData.farmStatus.stock
+    } : { season: { name: '', progress: 0, harvest: '' }, health: [], stock: [] };
 
-    const TASKS = [
-        { id: 1, type: t('tasks.irrigate'), typeIcon: 'Irrigate', crop: t('crops.wheat'), field: t('fields.fieldA'), date: t('dashboard.planner.today') + ', 4:00 PM', status: 'pending', timeline: 'today' },
-        { id: 2, type: t('tasks.scouting'), typeIcon: 'Scouting', crop: t('crops.mustard'), field: t('fields.fieldB'), date: t('dashboard.planner.today') + ', 5:30 PM', status: 'pending', timeline: 'today' },
-        { id: 3, type: t('tasks.fertilize'), typeIcon: 'Fertilize', crop: t('crops.potato'), field: t('fields.fieldC'), date: 'Tomorrow', status: 'upcoming', timeline: 'week' },
-        { id: 4, type: t('tasks.spray'), typeIcon: 'Spray', crop: t('crops.wheat'), field: t('fields.fieldA'), date: 'Jan 12', status: 'upcoming', timeline: 'week' },
-        { id: 5, type: t('tasks.harvest'), typeIcon: 'Harvest', crop: t('crops.mustard'), field: t('fields.fieldB'), date: 'Jan 28', status: 'upcoming', timeline: 'month' },
-    ];
+    const ALL_ALERTS = dashboardData ? [
+        ...(weather?.alerts?.map((a: any) => ({ ...a, category: 'weather', target: 'Farm Wide', action: a.suggestedAction, level: a.severity })) || []),
+        ...dashboardData.alerts
+    ] : [];
 
-    const ALERTS = [
-        { id: 1, type: t('alertsData.heatwave'), target: t('crops.wheat') + ' (' + t('fields.fieldA') + ')', action: t('tasks.irrigateAction'), level: 'high' },
-        { id: 2, type: t('alertsData.pestRisk'), target: t('crops.mustard') + ' (' + t('fields.fieldB') + ')', action: t('tasks.scoutAction'), level: 'medium' },
-    ];
+    const activeAlerts = ALL_ALERTS.filter((alert: any) => {
+        if (alert.category === 'weather' && !settings.alerts.weather) return false;
+        if (alert.category === 'cropHealth' && !settings.alerts.cropHealth) return false;
+        return true;
+    });
 
     const SCHEMES = [
         { id: 1, title: t('schemData.pmKisan'), due: t('schemData.creditsDue'), icon: Wallet },
         { id: 2, title: t('schemData.dripSub'), due: t('schemData.closingSoon'), icon: Droplets },
         { id: 3, title: t('schemData.soilCard'), due: t('schemData.updateReq'), icon: FileText },
     ];
+
+    if (dataLoading) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center h-screen text-green-600 gap-2">
+                    <Loader2 className="animate-spin" /> Loading Farm Data...
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <DashboardLayout>
+                <div className="flex flex-col items-center justify-center h-screen gap-4">
+                    <AlertTriangle className="w-12 h-12 text-red-500" />
+                    <h2 className="text-xl font-bold text-slate-800">Something went wrong</h2>
+                    <p className="text-slate-500">{error}</p>
+                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">
+                        Retry
+                    </button>
+                    <div className="p-4 bg-slate-100 rounded-lg text-xs font-mono text-slate-600 max-w-lg overflow-auto">
+                        Backend URL: /api/dashboard-stats
+                    </div>
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     return (
         <DashboardLayout>
@@ -693,7 +765,7 @@ export default function DashboardPage() {
                                     <div className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" /> {t('dashboard.live')}
                                 </span>
                             </h1>
-                            <p className="text-slate-500 font-medium">{t('dashboard.welcome')}, Aravind</p>
+                            <p className="text-slate-500 font-medium">{t('dashboard.welcome')}, {settings.profile.name || currentUser?.displayName || 'Farmer'}</p>
                         </div>
                         <div className="flex gap-2">
                             <button
@@ -719,12 +791,12 @@ export default function DashboardPage() {
                         <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
                             {/* ALERTS & INTELLIGENCE */}
                             <div className="md:col-span-2">
-                                <UnifiedAlertsCard alerts={ALERTS} />
+                                <UnifiedAlertsCard alerts={activeAlerts} />
                             </div>
 
                             {/* PLANNER */}
                             <div className="md:col-span-2">
-                                <UnifiedPlannerCard tasks={TASKS} />
+                                <UnifiedPlannerCard tasks={tasks} />
                             </div>
                         </div>
 

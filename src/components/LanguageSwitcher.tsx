@@ -1,15 +1,27 @@
 import { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Languages, ChevronDown } from 'lucide-react';
+import { useSettings } from '../context/SettingsContext';
 
 export default function LanguageSwitcher() {
     const { i18n } = useTranslation();
+    const { updateSettings, saveSettings } = useSettings();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    const changeLanguage = (lng: string) => {
-        i18n.changeLanguage(lng);
+    const changeLanguage = async (lng: string) => {
+        // Update context first (UI reacts)
+        updateSettings(prev => ({
+            ...prev,
+            language: { ...prev.language, appLanguage: lng }
+        }));
         setIsOpen(false);
+        // Persist
+        try {
+            await saveSettings();
+        } catch (e) {
+            console.error("Failed to save language preference", e);
+        }
     };
 
     // Close dropdown when clicking outside

@@ -5,16 +5,13 @@ import {
     Calendar as CalendarIcon, List, Plus,
     ChevronLeft, ChevronRight, Sprout, Droplets, Leaf,
     Scissors, Download, CheckCircle, AlertTriangle,
-    Info, DollarSign, MoreHorizontal, PanelRightClose, PanelRightOpen, PanelLeftClose, PanelLeftOpen,
-    Search, X, ChevronDown, ChevronUp, HelpCircle, BrainCircuit, Activity, Clock as ClockIcon
+    Info, DollarSign, MoreHorizontal, Sidebar,
+    Search, X, ChevronDown, ChevronUp, HelpCircle, BrainCircuit, Activity, Clock as ClockIcon, Loader2
 } from 'lucide-react';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
-import { db } from '../firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
-// CROP_CALENDAR_DETAILS removed in favor of API
-
+// Firebase imports removed
 
 // --- Types & Interfaces ---
 
@@ -28,7 +25,7 @@ interface Task {
     cost: number;
     alert?: string;
     severity?: 'low' | 'medium' | 'high';
-    isAISuggestion?: boolean; // New filtering capability
+    isAISuggestion?: boolean;
 }
 
 interface Plot {
@@ -38,7 +35,7 @@ interface Plot {
     size: string;
     soil: string;
     irrigation: string;
-    image: string; // Emoji as image for now
+    image: string;
 }
 
 interface AISuggestion {
@@ -47,27 +44,15 @@ interface AISuggestion {
     text: string;
     reasoning: string;
     originalDate?: string;
-    impact?: string; // e.g. "Save ₹200"
+    impact?: string;
 }
 
 // --- Mock Data ---
 
-// MOCK DATA REMOVED - using API
-// const PLOTS = ...
-// const MOCK_TASKS = ...
-// const AI_SUGGESTIONS = ... (Still mock or fetched? We'll leave AI mock for now as per plan, but Plots/Tasks move)
-
-// We will keep AI_SUGGESTIONS as mock for now or move it if needed.
 const AI_SUGGESTIONS: AISuggestion[] = [
     { id: 'ai1', type: 'reschedule', text: 'Moved Wheat Sowing to Jan 5', reasoning: 'Heavy rain (40mm) predicted on Jan 4 would wash away seeds.', originalDate: 'Jan 4' },
     { id: 'ai2', type: 'optimization', text: 'Reduce Urea by 10% in Plot B', reasoning: 'Recent soil sensor data shows sufficient Nitrogen levels from last crop.', impact: 'Save ₹350' },
     { id: 'ai3', type: 'intercropping', text: 'Plant Marigold in Plot C', reasoning: 'Marigolds naturally repel nematodes which frequently attack Tomato plants.', impact: 'Reduce pesticide cost' },
-];
-
-const MOCK_PLOTS: Plot[] = [
-    { id: 'plot_a', name: 'Field A (North)', crop: 'Wheat', size: '2.5 Acres', soil: 'Loamy', irrigation: 'Drip', image: '🌾' },
-    { id: 'plot_b', name: 'Field B (South)', crop: 'Mustard', size: '1.2 Acres', soil: 'Clay', irrigation: 'Sprinkler', image: '🌱' },
-    { id: 'plot_c', name: 'Orchard 1', crop: 'Mango', size: '4 Acres', soil: 'Red', irrigation: 'Drip', image: '🌳' },
 ];
 
 // --- Main Application ---
@@ -78,8 +63,8 @@ export default function PlannerPage() {
     const [selectedPlot, setSelectedPlot] = useState<string>('all');
     const [currentMonth, setCurrentMonth] = useState(new Date(2026, 0, 1)); // Jan 2026
     const [searchQuery, setSearchQuery] = useState('');
-    const [showAIPanel, setShowAIPanel] = useState(false); // Default hidden on mobile? layout handles it
-    // Effect to handle resize
+    const [showAIPanel, setShowAIPanel] = useState(false);
+
     React.useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth < 768 && viewMode !== 'list') setViewMode('list');
@@ -87,60 +72,67 @@ export default function PlannerPage() {
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, [viewMode]);
+
     const [showLeftPanel, setShowLeftPanel] = useState(false);
     const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>({ key: 'date', direction: 'asc' });
     const [aiFilterOnly, setAiFilterOnly] = useState(false);
-    const [cropDetails, setCropDetails] = useState<any[]>([]);
 
-    // State for Real Data
+    // Data States
+    const [cropDetails, setCropDetails] = useState<any[]>([]);
     const [plots, setPlots] = useState<Plot[]>([]);
     const [tasks, setTasks] = useState<Task[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
-    // Fetch All Data needed for Planner
-    // Real-time Listeners for Planner Data
+    // Fetch All Data from SQL Backend
     React.useEffect(() => {
-        // 1. Crops Listener
-        const unsubCrops = onSnapshot(collection(db, 'crop_calendar'), (snap) => {
-            const crops = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            setCropDetails(crops);
-        });
+        const fetchData = async () => {
+            try {
+                // setLoading(true); // Don't set loading true on every poll, handling differently
+                if (loading) setLoading(true);
+                setError(null);
 
-        // 2. Plots Listener
-        const unsubPlots = onSnapshot(collection(db, 'plots'), (snap) => {
-            const plotsData = snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Plot));
-            // Merge Mock Plots for Demo
-            const mergedPlots = [...plotsData, ...MOCK_PLOTS.filter(mp => !plotsData.find(p => p.id === mp.id))];
-            setPlots(mergedPlots);
-        });
+                const [cropsRes, plotsRes, tasksRes] = await Promise.all([
+                    fetch('/api/crops'),
+                    fetch('/api/plots'),
+                    fetch('/api/tasks')
+                ]);
 
-        // 3. Tasks Listener
-        const unsubTasks = onSnapshot(collection(db, 'tasks'), (snap) => {
-            const tasksData = snap.docs.map((doc, index) => {
-                const data = doc.data();
-                const taskDate = new Date(data.date);
-                let taskPlotId = data.plotId;
-
-                // DEMO: Assign Mock Plots to tasks from Jan (0) to May (4)
-                if (taskDate.getMonth() <= 4) {
-                    taskPlotId = MOCK_PLOTS[index % MOCK_PLOTS.length].id;
+                if (!cropsRes.ok || !plotsRes.ok || !tasksRes.ok) {
+                    throw new Error("One or more APIs failed to load");
                 }
 
-                return {
-                    ...data,
-                    id: doc.id,
-                    date: taskDate,
-                    plotId: taskPlotId
-                } as Task;
-            });
-            setTasks(tasksData);
-            console.log(`Planner Data Loaded: ${tasksData.length} tasks synced.`);
-        });
+                const c = await cropsRes.json();
+                // Parse JSON strings from backend
+                const parsedCrops = c.map((crop: any) => ({
+                    ...crop,
+                    sowingMonths: typeof crop.sowingMonths === 'string' ? JSON.parse(crop.sowingMonths) : crop.sowingMonths,
+                    harvestMonths: typeof crop.harvestMonths === 'string' ? JSON.parse(crop.harvestMonths) : crop.harvestMonths,
+                    majorStates: typeof crop.majorStates === 'string' ? JSON.parse(crop.majorStates) : crop.majorStates
+                }));
+                setCropDetails(parsedCrops);
+                setPlots(await plotsRes.json());
 
-        return () => {
-            unsubCrops();
-            unsubPlots();
-            unsubTasks();
+                const t = await tasksRes.json();
+                const realTasks = t.map((task: any) => ({
+                    ...task,
+                    date: new Date(task.date),
+                    plotId: task.plotId
+                }));
+                setTasks(realTasks);
+
+            } catch (error) {
+                console.error("Failed to fetch planner data", error);
+                setError("Failed to load planner data. Check your connection.");
+            } finally {
+                setLoading(false);
+            }
         };
+
+        fetchData();
+        // Poll for updates every 30s
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
     }, []);
 
     // Deduplicate plots by name
@@ -193,7 +185,6 @@ export default function PlannerPage() {
         setSortConfig({ key, direction });
     };
 
-    // ... inside PlannerPage component
     const currentMonthStr = format(currentMonth, 'MMMM');
 
     // Helper: Dynamic Season Info
@@ -211,7 +202,7 @@ export default function PlannerPage() {
             season = Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
         }
         return { season, sowingCount: sowingCrops.length, harvestCount: harvestingCrops.length };
-    }, [currentMonthStr]);
+    }, [currentMonthStr, cropDetails]);
 
     // --- Dynamic Strategy Logic ---
     const strategy = React.useMemo(() => {
@@ -288,6 +279,32 @@ export default function PlannerPage() {
         URL.revokeObjectURL(url);
     };
 
+    // Loading State
+    if (loading) {
+        return (
+            <DashboardLayout>
+                <div className="flex h-[calc(100vh-100px)] items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-green-600 animate-spin" />
+                </div>
+            </DashboardLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <DashboardLayout>
+                <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] gap-4">
+                    <AlertTriangle className="w-12 h-12 text-amber-500" />
+                    <h3 className="text-xl font-bold text-gray-800">Connection Issue</h3>
+                    <p className="text-gray-500">{error}</p>
+                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-bold transition">
+                        Retry
+                    </button>
+                </div>
+            </DashboardLayout>
+        );
+    }
+
     return (
         <DashboardLayout>
             <div
@@ -306,7 +323,7 @@ export default function PlannerPage() {
                                 className="p-2 hover:bg-white/50 rounded-lg text-gray-500 transition-colors hidden lg:block"
                                 title={showLeftPanel ? t('planner.toggleSidebar') : t('planner.toggleSidebar')}
                             >
-                                {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
+                                {showLeftPanel ? <Sidebar className="w-5 h-5 rotate-180" /> : <Sidebar className="w-5 h-5" />}
                             </button>
                             <div>
                                 <h1 className="text-2xl font-black text-gray-900 flex items-center gap-2 tracking-tight">
@@ -375,7 +392,7 @@ export default function PlannerPage() {
                                 )}
                                 title={showAIPanel ? t('planner.toggleAI') : t('planner.toggleAI')}
                             >
-                                {showAIPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+                                {showAIPanel ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
                                 <span className="hidden lg:inline font-medium text-sm">{t('planner.aiInsights')}</span>
                             </button>
                         </div>

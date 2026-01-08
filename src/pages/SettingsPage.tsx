@@ -5,88 +5,18 @@ import {
     Save, LogOut, ChevronDown, ChevronUp, Loader2,
     Check
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { db, auth } from '../firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { auth } from '../firebase';
 import { signOut } from 'firebase/auth';
-
-// --- Types ---
-interface SettingsState {
-    profile: {
-        name: string;
-        state: string;
-        district: string;
-        preferredCrops: string[];
-        farmSize: 'small' | 'marginal' | 'medium' | 'large';
-    };
-    language: {
-        appLanguage: string;
-        textSize: 'small' | 'medium' | 'large';
-        voiceAssistant: boolean;
-        voiceLanguage: string;
-        readAlerts: boolean;
-    };
-    alerts: {
-        weather: boolean;
-        cropHealth: boolean;
-        schemes: boolean;
-        tasks: boolean;
-    };
-    planning: {
-        mode: 'conservative' | 'balanced' | 'aggressive';
-        budgetStrictness: 'strict' | 'flexible';
-        irrigation: 'water-saving' | 'yield';
-    };
-    data: {
-        lowBandwidth: boolean;
-        offlineMode: boolean; // mock
-        syncFreq: 'daily' | 'weekly';
-    };
-}
-
-const DEFAULT_SETTINGS: SettingsState = {
-    profile: {
-        name: '',
-        state: '',
-        district: '',
-        preferredCrops: [],
-        farmSize: 'small'
-    },
-    language: {
-        appLanguage: 'en',
-        textSize: 'medium',
-        voiceAssistant: false,
-        voiceLanguage: 'en',
-        readAlerts: false
-    },
-    alerts: {
-        weather: true,
-        cropHealth: true,
-        schemes: true,
-        tasks: true
-    },
-    planning: {
-        mode: 'balanced',
-        budgetStrictness: 'flexible',
-        irrigation: 'yield'
-    },
-    data: {
-        lowBandwidth: false,
-        offlineMode: false,
-        syncFreq: 'daily'
-    }
-};
+import { useSettings, type SettingsState } from '../context/SettingsContext';
 
 const CROP_OPTIONS = ["Wheat", "Rice", "Maize", "Cotton", "Mustard", "Sugarcane", "Potato", "Tomato", "Soybean"];
 
 export default function SettingsPage() {
-    const { currentUser } = useAuth();
-    const [settings, setSettings] = useState<SettingsState>(DEFAULT_SETTINGS);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [openSection, setOpenSection] = useState<string | null>('profile'); // For mobile accordion
 
-    // --- distinct screen sizes ---
+    const { settings, updateSettings, saveSettings, loading } = useSettings();
+    const [saving, setSaving] = useState(false);
+    const [saveMessage, setSaveMessage] = useState("Save Changes");
+    const [openSection, setOpenSection] = useState<string | null>('profile'); // For mobile accordion
     const [isMobile, setIsMobile] = useState(false);
 
     useEffect(() => {
@@ -96,45 +26,14 @@ export default function SettingsPage() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
-    // --- Load Data ---
-    useEffect(() => {
-        const fetchSettings = async () => {
-            if (!currentUser) return;
-            try {
-                const docRef = doc(db, 'users', currentUser.uid);
-                const docSnap = await getDoc(docRef);
-                if (docSnap.exists() && docSnap.data().settings) {
-                    // Merge with defaults to ensure structure
-                    setSettings(prev => ({ ...prev, ...docSnap.data().settings }));
-                } else {
-                    // Pre-fill email/name if available from Auth
-                    setSettings(prev => ({
-                        ...prev,
-                        profile: { ...prev.profile, name: currentUser.displayName || '' }
-                    }));
-                }
-            } catch (error) {
-                console.error("Error loading settings:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchSettings();
-    }, [currentUser]);
-
     // --- Save Data ---
     const handleSave = async () => {
-        if (!currentUser) return;
         setSaving(true);
         try {
-            const docRef = doc(db, 'users', currentUser.uid);
-            await setDoc(docRef, { settings }, { merge: true });
-            // Simple visual feedback
-            const btn = document.getElementById('save-btn');
-            if (btn) btn.innerText = "Saved!";
+            await saveSettings();
+            setSaveMessage("Saved!");
             setTimeout(() => {
-                if (btn) btn.innerText = "Save Preferences";
+                setSaveMessage("Save Changes");
             }, 2000);
         } catch (error) {
             console.error("Error saving settings:", error);
@@ -150,19 +49,19 @@ export default function SettingsPage() {
     };
 
     const updateProfile = (field: keyof SettingsState['profile'], value: any) => {
-        setSettings(prev => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
+        updateSettings(prev => ({ ...prev, profile: { ...prev.profile, [field]: value } }));
     };
     const updateLang = (field: keyof SettingsState['language'], value: any) => {
-        setSettings(prev => ({ ...prev, language: { ...prev.language, [field]: value } }));
+        updateSettings(prev => ({ ...prev, language: { ...prev.language, [field]: value } }));
     };
     const updateAlert = (field: keyof SettingsState['alerts'], value: any) => {
-        setSettings(prev => ({ ...prev, alerts: { ...prev.alerts, [field]: value } }));
+        updateSettings(prev => ({ ...prev, alerts: { ...prev.alerts, [field]: value } }));
     };
     const updatePlanning = (field: keyof SettingsState['planning'], value: any) => {
-        setSettings(prev => ({ ...prev, planning: { ...prev.planning, [field]: value } }));
+        updateSettings(prev => ({ ...prev, planning: { ...prev.planning, [field]: value } }));
     };
     const updateData = (field: keyof SettingsState['data'], value: any) => {
-        setSettings(prev => ({ ...prev, data: { ...prev.data, [field]: value } }));
+        updateSettings(prev => ({ ...prev, data: { ...prev.data, [field]: value } }));
     };
 
     const toggleCrop = (crop: string) => {
@@ -231,7 +130,7 @@ export default function SettingsPage() {
                         className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-medium shadow-lg shadow-emerald-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Save Changes
+                        {saveMessage}
                     </button>
                 </div>
 

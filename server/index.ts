@@ -1,14 +1,5 @@
 import express from 'express';
 import cors from 'cors';
-import { db, initDB } from './db.js'; // Note .js extension for ESM if needed, or if using tsx it handles imports. Stick to .js or no extension? tsx handles .ts imports if omitting extension sometimes.
-// But standard imports in TS don't use extension usually.
-// Let's try to remove extension in import if using tsx.
-
-// However, if "type": "module" in package.json, we need extensions or experimental flag.
-// I'll stick to NO extension and hope tsx resolves it (it usually does).
-// Actually, `tsx` handles TS files directly.
-
-// Re-write without .js extension to be safe for `tsx`.
 import { db as database, initDB as initializeDB } from './db';
 
 const app = express();
@@ -199,6 +190,116 @@ app.get('/api/tickets', (req, res) => {
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Failed to fetch tickets' });
+    }
+});
+
+// --- Dashboard Aggregation Route ---
+app.get('/api/dashboard-stats', (req, res) => {
+    try {
+        // 1. KPI: Active Crops
+        const activeCropsStmt = database.prepare("SELECT count(DISTINCT crop) as count, count(id) as totalPlots FROM plots WHERE status = 'Active'");
+        const activeCrops = activeCropsStmt.get() as { count: number, totalPlots: number };
+
+        // 2. KPI: Tasks (Today)
+        const today = new Date().toISOString().split('T')[0];
+        // Note: String comparison for dates works if format is YYYY-MM-DD. 
+        // Our seeds use full ISO. We need to match substring.
+        const tasksStmt = database.prepare(`
+            SELECT 
+                SUM(CASE WHEN status != 'done' THEN 1 ELSE 0 END) as pending,
+                SUM(CASE WHEN status = 'done' THEN 1 ELSE 0 END) as completed
+            FROM tasks 
+            WHERE date LIKE ?
+        `);
+        const taskStats = tasksStmt.get(`${today}%`) as { pending: number, completed: number };
+
+        // 3. KPI: Budget Used (Total 'done' tasks cost)
+        const budgetStmt = database.prepare("SELECT SUM(cost) as total FROM tasks WHERE status = 'done'");
+        const budget = budgetStmt.get() as { total: number };
+
+        // 4. Alerts (From Tasks)
+        // Fetch tasks that have an alert set, limit 5
+        const alertsStmt = database.prepare("SELECT id, type, title as target, alert as typeName, severity FROM tasks WHERE alert IS NOT NULL LIMIT 5");
+        const alerts = alertsStmt.all().map((a: any) => ({
+            id: a.id,
+            category: a.type === 'weather' ? 'weather' : 'cropHealth', // Simplified mapping
+            type: a.typeName,
+            target: a.target,
+            action: 'View', // Placeholder action
+            level: a.severity || 'medium'
+        }));
+
+        // 5. Farm Status (Crops)
+        const farmHealthStmt = database.prepare("SELECT name as field, crop, status, size as area FROM plots");
+        const farmHealth = farmHealthStmt.all().map((p: any) => ({
+            field: p.field,
+            crop: p.crop,
+            status: p.status === 'Active' ? 'healthy' : 'ok', // approximate status mapping
+            area: p.area
+        }));
+
+        // 6. Farm Status (Stock - Low Stock)
+        const lowStockStmt = database.prepare("SELECT name, quantity as level, unit, min_threshold FROM inventory_items WHERE quantity <= min_threshold");
+        const lowStock = lowStockStmt.all().map((s: any) => ({
+            name: s.name,
+            level: s.level,
+            status: 'low',
+            unit: s.unit
+        }));
+
+        res.json({
+            kpi: {
+                activeCrops: activeCrops.count,
+                totalPlots: activeCrops.totalPlots,
+                todayTasks: taskStats?.pending || 0,
+                completedTasks: taskStats?.completed || 0,
+                budgetUsed: budget.total || 0
+            },
+            alerts,
+            farmStatus: {
+                health: farmHealth,
+                stock: lowStock
+            }
+        });
+
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Failed to fetch dashboard stats' });
+    }
+});
+
+// --- AI Analysis Mock Endpoint ---
+app.post('/api/analyze-crop', async (req, res) => {
+    try {
+        const { cropName, growthStage } = req.body;
+
+        // Simulate Processing Delay
+        await new Promise(r => setTimeout(r, 2000));
+
+        const isCritical = Math.random() > 0.5;
+        const result = {
+            id: Date.now().toString(),
+            date: new Date(),
+            diseaseName: isCritical ? "Late Blight" : "Nitrogen Deficiency",
+            severity: isCritical ? "High" : "Medium",
+            confidence: 89 + Math.floor(Math.random() * 10),
+            affectedArea: "Leaf",
+            riskFlag: isCritical ? "Critical" : "Needs Attention",
+            aiExplanation: isCritical
+                ? `This looks like advanced Late Blight on the ${cropName}, likely exacerbated by humidity. The lesions are spreading.`
+                : `The yellowing patterns on the ${cropName} (${growthStage}) suggest early Nitrogen deficiency.`,
+            recommendations: isCritical
+                ? ["Apply Mancozeb fungicide immediately.", "Remove and destroy infected plant parts.", "Reduce overhead irrigation."]
+                : ["Apply a Nitrogen-rich fertilizer (Urea or Compost).", "Check soil pH levels.", "Monitor new leaves."],
+            advisory: isCritical
+                ? { title: "High Risk Alert", description: "Spreads fast in wet weather. Consult officer if 20% affected.", type: "critical" }
+                : { title: "Yield Impact Warning", description: "Untreated deficiency can reduce grain filling.", type: "warning" }
+        };
+
+        res.json(result);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Analysis failed' });
     }
 });
 

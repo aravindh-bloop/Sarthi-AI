@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import {
     Upload, Camera, CheckCircle, AlertTriangle, Loader2,
@@ -10,8 +10,6 @@ import {
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
-import { db } from '../firebase';
-import { collection, onSnapshot } from 'firebase/firestore';
 
 // --- Types ---
 
@@ -75,9 +73,6 @@ const FIELDS = [
     { id: 'f3', name: 'Greenhouse 1 (Peppers)' },
 ];
 
-// Mock Data Removed (using API)
-// const INITIAL_TICKETS: SupportTicket[] = ...;
-
 
 // --- Main Component ---
 
@@ -87,20 +82,62 @@ export default function CropHealthPage() {
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [context, setContext] = useState<CropContext>({ cropName: '', growthStage: '', fieldId: '' });
     const [result, setResult] = useState<AnalysisResult | null>(null);
-    const [tickets, setTickets] = useState<SupportTicket[]>([]); // Start empty, fetch real data
+    const [tickets, setTickets] = useState<SupportTicket[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
-    // Fetch Tickets
-    // Fetch Tickets (Real-time from Firebase)
+    const resultRef = useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to result when it appears
     useEffect(() => {
-        const unsubscribe = onSnapshot(collection(db, 'support_tickets'), (snapshot) => {
-            const ticketData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as SupportTicket[];
-            setTickets(ticketData);
-        }, (error) => {
-            console.error("Failed to fetch tickets from Firebase", error);
-        });
+        if (step === 'result' && resultRef.current) {
+            // Small timeout to ensure render is complete
+            setTimeout(() => {
+                resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 100);
+        }
+    }, [step]);
 
-        return () => unsubscribe();
+    // Fetch Tickets (API)
+    useEffect(() => {
+        const fetchTickets = async () => {
+            try {
+                setError(null);
+                const res = await fetch('/api/tickets');
+                if (res.ok) {
+                    const data = await res.json();
+                    setTickets(data);
+                } else {
+                    console.error("Tickets load failed", res.status);
+                    setError("Unable to load support tickets. Some features may be unavailable.");
+                }
+            } catch (err) {
+                console.error("Failed to fetch tickets", err);
+                setError("Network error loading page data.");
+            }
+        };
+        fetchTickets();
+        // Poll for updates every 30s
+        const interval = setInterval(fetchTickets, 30000);
+        return () => clearInterval(interval);
     }, []);
+
+    if (error && tickets.length === 0) {
+        return (
+            <DashboardLayout>
+                <div className="flex flex-col items-center justify-center h-[calc(100vh-100px)] gap-4">
+                    <CloudRain className="w-12 h-12 text-blue-400" />
+                    <h3 className="text-xl font-bold text-gray-800">Data Unavailable</h3>
+                    <p className="text-gray-500">{error}</p>
+                    <button onClick={() => window.location.reload()} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 font-bold">
+                        Retry
+                    </button>
+                    <button onClick={() => setError(null)} className="text-sm text-slate-500 underline hover:text-slate-700">
+                        Continue Offline (Demo Mode)
+                    </button>
+                </div>
+            </DashboardLayout>
+        );
+    }
 
     const [isRaisingTicket, setIsRaisingTicket] = useState(false);
     const [selectedField, setSelectedField] = useState('f1');
@@ -192,36 +229,24 @@ export default function CropHealthPage() {
         }
     };
 
-    const handleContextSubmit = (e: React.FormEvent) => {
+    const handleContextSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setStep('analyzing');
-
-        // Mock AI & ML Processing
-        setTimeout(() => {
-            const isCritical = Math.random() > 0.5;
-
-            const mockResult: AnalysisResult = {
-                id: Date.now().toString(),
-                date: new Date(),
-                diseaseName: isCritical ? "Late Blight" : "Nitrogen Deficiency",
-                severity: isCritical ? "High" : "Medium",
-                confidence: 89,
-                affectedArea: "Leaf",
-                riskFlag: isCritical ? "Critical" : "Needs Attention",
-                aiExplanation: isCritical
-                    ? "This looks like advanced Late Blight, likely exacerbated by the recent high humidity. The lesions are spreading rapidly across the leaf surface."
-                    : "The yellowing patterns suggest early Nitrogen deficiency. It's not yet critical but could impact yield if ignored.",
-                recommendations: isCritical
-                    ? ["Apply Mancozeb fungicide immediately.", "Remove and destroy infected plant parts.", "Reduce overhead irrigation to lower humidity."]
-                    : ["Apply a Nitrogen-rich fertilizer (Urea or Compost).", "Check soil pH levels.", "Monitor new leaves for color improvement."],
-                advisory: isCritical
-                    ? { title: "High Risk Alert", description: "This disease spreads fast in wet weather. Consult a local officer if 20% of crop is affected.", type: "critical" }
-                    : { title: "Yield Impact Warning", description: "Untreated deficiency can reduce grain filling by up to 15%.", type: "warning" }
-            };
-
-            setResult(mockResult);
+        try {
+            const response = await fetch('/api/analyze-crop', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(context)
+            });
+            const data = await response.json();
+            setResult(data);
             setStep('result');
-        }, 2500);
+        } catch (error) {
+            console.error("Analysis Failed", error);
+            // Handle error (maybe setStep back to context or show error)
+            setStep('context');
+            alert("Analysis failed. Please try again.");
+        }
     };
 
     const handleRaiseTicket = () => {
@@ -295,7 +320,7 @@ export default function CropHealthPage() {
                     </div>
 
                     {viewMode === 'diagnosis' ? (
-                        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-hidden">
+                        <div className="flex-1 flex flex-col gap-4 min-h-0 overflow-y-auto pb-20 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
                             {/* Diagnostic Command Center - Full Width Stack */}
                             <div className="w-full flex flex-col gap-4">
 
@@ -429,7 +454,7 @@ export default function CropHealthPage() {
 
                                 {/* Step 4: Result Panel (Ultra-Premium Redesign) */}
                                 {step === 'result' && result && (
-                                    <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-6">
+                                    <motion.div ref={resultRef} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 pb-6">
 
                                         {/* Primary Insight Card */}
                                         <div className="bg-white/90 backdrop-blur-3xl rounded-[2.5rem] border border-white/60 shadow-2xl shadow-slate-200/50 overflow-hidden">
