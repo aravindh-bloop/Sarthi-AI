@@ -331,8 +331,8 @@ export default function PlannerPage() {
     return (
         <DashboardLayout>
             <div
-                className="min-h-screen relative pb-20 flex flex-col bg-cover bg-center bg-fixed"
-                style={{ backgroundImage: "url('/assets/images/dashboard-bg.jpg')" }}
+                className="min-h-screen relative flex flex-col bg-cover bg-center bg-fixed"
+                style={{ backgroundImage: "url('/assets/images/farm1%20copy.jpg')" }}
             >
                 {/* Overlay for better text readability */}
                 <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-0 pointer-events-none" />
@@ -571,6 +571,22 @@ export default function PlannerPage() {
                                 />
                             )}
                         </div>
+                        <footer className="bg-white/80 backdrop-blur-md border-t border-gray-200 p-3 md:p-4 flex justify-between items-center shadow-sm w-full mt-6 rounded-2xl">
+                            <div className="hidden md:flex items-center gap-6 text-sm">
+                                <div>
+                                    <span className="text-gray-500">{t('planner.tasks')}:</span> <span className="font-bold text-gray-800">{filteredTasks.length}</span>
+                                </div>
+                                <div>
+                                    <span className="text-gray-500">{t('planner.cost')}:</span> <span className="font-bold text-gray-800">₹12,450</span>
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-3 ml-auto">
+                                <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition" title="Export Plan">
+                                    <Download className="w-4 h-4" />
+                                    <span className="hidden sm:inline">{t('planner.export')}</span>
+                                </button>
+                            </div>
+                        </footer>
                     </main>
 
                     {/* Right Panel: AI & Insights (Collapsible) */}
@@ -675,25 +691,7 @@ export default function PlannerPage() {
                 }
 
                 {/* Footer Bar */}
-                <footer className={clsx(
-                    "fixed bottom-0 right-0 z-30 bg-white border-t border-gray-200 p-3 md:p-4 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] transition-all duration-300",
-                    showLeftPanel ? "lg:left-72 left-0" : "left-0"
-                )}>
-                    <div className="hidden md:flex items-center gap-6 text-sm">
-                        <div>
-                            <span className="text-gray-500">{t('planner.tasks')}:</span> <span className="font-bold text-gray-800">{filteredTasks.length}</span>
-                        </div>
-                        <div>
-                            <span className="text-gray-500">{t('planner.cost')}:</span> <span className="font-bold text-gray-800">₹12,450</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 ml-auto">
-                        <button onClick={handleExport} className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium transition" title="Export Plan">
-                            <Download className="w-4 h-4" />
-                            <span className="hidden sm:inline">{t('planner.export')}</span>
-                        </button>
-                    </div>
-                </footer>
+
             </div >
         </DashboardLayout >
     );

@@ -8,8 +8,8 @@ import {
     Droplets, Sun, ChevronRight,
     CheckCircle, ArrowRight, Activity,
     TrendingUp, TrendingDown, BarChart3,
-    Bot, Sparkles, Mic,
-    AlertOctagon, FileText, X, Loader2
+    Bot, Sparkles,
+    AlertOctagon, FileText, Loader2
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -342,13 +342,12 @@ function UnifiedStatusCard({ farmStatus }: any) {
     )
 }
 
-function QuickActionsBar({ onAssistantClick, onLogExpense, onUpdateStock, onCheckPrices }: any) {
+function QuickActionsBar({ onLogExpense, onUpdateStock, onCheckPrices }: any) {
     const { t } = useTranslation();
     const actions = [
         { label: t('dashboard.quickActions.logExpense'), icon: Wallet, color: 'text-purple-600', bg: 'bg-purple-100', onClick: onLogExpense },
         { label: t('dashboard.quickActions.updateStock'), icon: BarChart3, color: 'text-blue-600', bg: 'bg-blue-100', onClick: onUpdateStock },
         { label: t('dashboard.quickActions.checkPrices'), icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100', onClick: onCheckPrices },
-        { label: t('dashboard.quickActions.askSarthi'), icon: Mic, color: 'text-indigo-600', bg: 'bg-indigo-100', agent: true, onClick: onAssistantClick }
     ];
 
     return (
@@ -462,179 +461,12 @@ function MarketPricesModal({ isOpen, onClose }: any) {
     );
 }
 
-function VoiceAssistant({ isOpen, onClose }: any) {
-    const [status, setStatus] = useState<'listening' | 'processing' | 'answering'>('listening');
-    const [query, setQuery] = useState('');
-    const [answerText, setAnswerText] = useState('');
-    const [displayedAnswer, setDisplayedAnswer] = useState('');
-
-    useEffect(() => {
-        if (isOpen) {
-            setStatus('listening');
-            setQuery('');
-            setAnswerText('');
-            setDisplayedAnswer('');
-        }
-    }, [isOpen]);
-
-    const handleAsk = (q: string) => {
-        setQuery(q);
-        setStatus('processing');
-        setTimeout(() => {
-            const answers: any = {
-                'Market prices for Wheat?': "Current market price for Wheat in your region (Mandis in 50km radius) is ₹2,250/quintal. Prices are trending upwards by 2% compared to last week due to high demand.",
-                'Is it going to rain?': "Yes, light evening showers are expected tomorrow (70% probability) in your area. I recommend delaying any planned irrigation by at least 24 hours to conserve water.",
-                'Irrigation schedule?': "Based on soil moisture sensors in Field A, you should irrigate Wheat tomorrow morning (6 AM). Field B (Mustard) moisture levels are adequate for the next 3 days."
-            };
-            setAnswerText(answers[q] || "I don't have information on that specifically, but I can help you connect with an agri-expert.");
-            setStatus('answering');
-        }, 1500);
-    };
-
-    useEffect(() => {
-        if (status === 'answering' && answerText) {
-            let i = 0;
-            const interval = setInterval(() => {
-                setDisplayedAnswer(answerText.substring(0, i));
-                i++;
-                if (i > answerText.length) clearInterval(interval);
-            }, 30);
-            return () => clearInterval(interval);
-        }
-    }, [status, answerText]);
-
-    if (!isOpen) return null;
-
-    return (
-        <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center p-4 sm:p-6 pointer-events-none">
-            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm pointer-events-auto transition-opacity" onClick={onClose} />
-
-            <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                className="relative w-full max-w-lg bg-white shadow-2xl rounded-3xl overflow-hidden pointer-events-auto flex flex-col max-h-[80vh]"
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white/50 backdrop-blur-sm z-10">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 bg-indigo-100 rounded-full text-indigo-600">
-                            <Bot size={20} />
-                        </div>
-                        <h3 className="font-bold text-slate-800">Sarthi Assistant</h3>
-                    </div>
-                    <button onClick={onClose} className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-600 transition">
-                        <X size={20} />
-                    </button>
-                </div>
-
-                {/* Content Area */}
-                <div className="p-6 md:p-8 flex flex-col items-center justify-center min-h-[300px] relative overflow-y-auto">
-
-                    {status === 'listening' && (
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                            className="flex flex-col items-center gap-8 text-center"
-                        >
-                            <div className="relative flex items-center justify-center">
-                                <div className="absolute inset-0 bg-indigo-500/20 rounded-full animate-ping" />
-                                <div className="w-20 h-20 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shadow-xl shadow-indigo-300 flex items-center justify-center relative z-10 cursor-pointer hover:scale-105 transition-transform">
-                                    <Mic className="text-white w-10 h-10 animate-pulse" />
-                                </div>
-                            </div>
-                            <div className="space-y-2 max-w-xs">
-                                <h4 className="text-2xl font-black text-slate-800">Listening...</h4>
-                                <p className="text-slate-500 font-medium">Ask the agent anything, and get your queries solved right away!</p>
-                            </div>
-                        </motion.div>
-                    )}
-
-                    {status === 'processing' && (
-                        <motion.div
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                            className="flex flex-col items-center gap-6 text-center"
-                        >
-                            <div className="relative">
-                                <div className="w-16 h-16 border-4 border-indigo-100 border-t-indigo-500 rounded-full animate-spin" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <Sparkles className="w-6 h-6 text-indigo-500 animate-pulse" />
-                                </div>
-                            </div>
-                            <p className="text-lg font-bold text-slate-600 animate-pulse">Processing your query...</p>
-                            <p className="text-sm text-slate-400">"{query}"</p>
-                        </motion.div>
-                    )}
-
-                    {status === 'answering' && (
-                        <motion.div
-                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                            className="w-full space-y-6"
-                        >
-                            <div className="flex justify-end">
-                                <div className="bg-indigo-50 text-indigo-900 px-4 py-2 rounded-2xl rounded-tr-sm text-sm font-medium max-w-[80%]">
-                                    {query}
-                                </div>
-                            </div>
-
-                            <div className="flex gap-4 items-start">
-                                <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full shrink-0 shadow-lg">
-                                    <Bot className="w-5 h-5 text-white" />
-                                </div>
-                                <div className="space-y-2">
-                                    <div className="text-slate-800 font-medium leading-relaxed">
-                                        {displayedAnswer}
-                                        <span className="inline-block w-2 h-4 bg-indigo-500 animate-pulse ml-1 align-middle">|</span>
-                                    </div>
-                                    {displayedAnswer.length === answerText.length && (
-                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-2">
-                                            <button
-                                                onClick={() => setStatus('listening')}
-                                                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:underline flex items-center gap-1"
-                                            >
-                                                Ask another question <ArrowRight size={12} />
-                                            </button>
-                                        </motion.div>
-                                    )}
-                                </div>
-                            </div>
-                        </motion.div>
-                    )}
-
-                </div>
-
-                {/* Footer Suggestions (Only show when listening) */}
-                <AnimatePresence>
-                    {status === 'listening' && (
-                        <motion.div
-                            initial={{ height: 'auto', opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="bg-slate-50 px-6 py-4 border-t border-slate-100"
-                        >
-                            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                {['Market prices for Wheat?', 'Is it going to rain?', 'Irrigation schedule?'].map((q, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => handleAsk(q)}
-                                        className="whitespace-nowrap px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:border-indigo-300 hover:text-indigo-600 transition shadow-sm"
-                                    >
-                                        {q}
-                                    </button>
-                                ))}
-                            </div>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </motion.div>
-        </div>
-    )
-}
 
 export default function DashboardPage() {
     const { t } = useTranslation();
     const navigate = useNavigate();
     const { currentUser } = useAuth();
     const { settings } = useSettings();
-    const [isAssistantOpen, setIsAssistantOpen] = useState(false);
     const [isExpenseModalOpen, setIsExpenseModalOpen] = useState(false);
     const [isMarketModalOpen, setIsMarketModalOpen] = useState(false);
 
@@ -790,7 +622,6 @@ export default function DashboardPage() {
 
     return (
         <DashboardLayout>
-            <VoiceAssistant isOpen={isAssistantOpen} onClose={() => setIsAssistantOpen(false)} />
             <ExpenseModal isOpen={isExpenseModalOpen} onClose={() => setIsExpenseModalOpen(false)} />
             <MarketPricesModal isOpen={isMarketModalOpen} onClose={() => setIsMarketModalOpen(false)} />
             <div className="min-h-screen pb-20 p-4 md:p-6 lg:p-8 font-sans text-slate-800 bg-gradient-to-br from-lime-200 via-green-300 to-emerald-400 relative">
@@ -809,12 +640,7 @@ export default function DashboardPage() {
                             <p className="text-slate-500 font-medium">{t('dashboard.welcome')}, {settings.profile.name || currentUser?.displayName || 'Farmer'}</p>
                         </div>
                         <div className="flex gap-2">
-                            <button
-                                onClick={() => setIsAssistantOpen(true)}
-                                className="bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-slate-300 hover:bg-slate-700 transition active:scale-95 flex items-center gap-2"
-                            >
-                                <Bot size={18} /> {t('dashboard.sarthiAssistant')}
-                            </button>
+                            {/* Actions removed */}
                         </div>
                     </div>
 
@@ -850,7 +676,6 @@ export default function DashboardPage() {
                     {/* 4. Secondary Actions / Footer */}
                     <div className="space-y-4">
                         <QuickActionsBar
-                            onAssistantClick={() => setIsAssistantOpen(true)}
                             onLogExpense={() => setIsExpenseModalOpen(true)}
                             onUpdateStock={() => navigate('/inventory')}
                             onCheckPrices={() => setIsMarketModalOpen(true)}

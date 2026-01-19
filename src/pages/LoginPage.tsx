@@ -31,39 +31,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useTranslation } from "react-i18next"; // Added to support existing i18n if needed, but the user code uses hardcoded text or local state.
-// The user's code uses <LanguageToggle> with local state. I should probably integrate strict i18n triggers if I can, but user provided specific code. 
-// I will stick to their code for the UI, but maybe update the setLang to actually change language.
-
-function LanguageToggle() {
-    const [lang, setLang] = React.useState("English")
-    const { i18n } = useTranslation();
-
-    const changeLanguage = (lng: string) => {
-        setLang(lng === 'en' ? 'English' : 'தமிழ்');
-        i18n.changeLanguage(lng);
-    }
-
-    // Sync initial state
-    React.useEffect(() => {
-        setLang(i18n.language === 'ta' ? 'தமிழ்' : 'English');
-    }, [i18n.language]);
-
-    return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="rounded-full gap-2 border-slate-200 bg-transparent">
-                    <Globe className="h-4 w-4" />
-                    {lang}
-                    <ChevronDown className="h-3 w-3 opacity-50" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="rounded-xl">
-                <DropdownMenuItem onClick={() => changeLanguage("en")}>English</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => changeLanguage("ta")}>தமிழ்</DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-    )
-}
 
 
 
@@ -150,7 +117,7 @@ function LoginForm() {
                                         type="email"
                                         value={email}
                                         onChange={(e) => setEmail(e.target.value)}
-                                        placeholder="name@farm.com"
+                                        placeholder={t('authPage.emailPlaceholder')}
                                         className="h-16 bg-muted/30 border-transparent focus:bg-white focus:border-primary/40 rounded-2xl px-6 transition-all text-base font-medium placeholder:text-muted-foreground/40 shadow-inner"
                                         disabled={isLoading}
                                         required
@@ -254,10 +221,10 @@ export default function LoginPage() {
         <div className="min-h-screen bg-white selection:bg-primary/20 font-sans">
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-[60] bg-white/80 backdrop-blur-md border-b border-slate-100">
-                <div className="max-w-7xl mx-auto px-6 h-20 flex items-center">
+                <div className="w-full px-6 md:px-12 h-20 flex items-center">
                     <div className="flex items-center gap-2">
-                        <img src="/sarthi_logo.png" alt="Sarthi AI" className="w-10 h-10 object-contain" />
-                        <span className="text-xl font-black tracking-tight text-slate-900">Sarthi AI</span>
+                        <img src="/sarthi_logo.png" alt={t('app.title')} className="w-10 h-10 object-contain" />
+                        <span className="text-xl font-black tracking-tight text-slate-900">{t('app.title')}</span>
                     </div>
 
                     <div className="hidden md:flex items-center gap-8 ml-auto">
@@ -267,19 +234,15 @@ export default function LoginPage() {
                         >
                             {t('navigation.features')}
                         </a>
-                        <a
-                            href="#about"
-                            className="text-sm font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest"
-                        >
-                            {t('landing.footer.about')}
-                        </a>
+
                         <a
                             href="#help"
                             className="text-sm font-bold text-slate-500 hover:text-primary transition-colors uppercase tracking-widest"
                         >
                             {t('navigation.help') || "Help Desk"}
                         </a>
-                        <LanguageToggle />
+
+
                     </div>
 
                     <button className="md:hidden p-2 ml-auto" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
@@ -514,7 +477,7 @@ export default function LoginPage() {
                         <div className="space-y-6">
                             <div className="flex items-center gap-2 text-white">
                                 <Sprout className="w-8 h-8 text-emerald-400" />
-                                <span className="text-2xl font-black tracking-tight">Sarthi AI</span>
+                                <span className="text-2xl font-black tracking-tight">{t('app.title')}</span>
                             </div>
                             <p className="text-slate-400 text-sm leading-relaxed">
                                 {t('authPage.hero.desc')}
@@ -589,7 +552,7 @@ export default function LoginPage() {
 
                     <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-6">
                         <div className="flex items-center gap-2 text-slate-500">
-                            <span className="text-xs font-bold uppercase tracking-widest">&copy; 2026 Sarthi AI. All rights reserved.</span>
+                            <span className="text-xs font-bold uppercase tracking-widest">{t('landing.footer.copyright')}</span>
                         </div>
                         <div className="text-slate-600 text-[10px] uppercase tracking-widest font-bold">
                             {t('landing.footer.sources')}

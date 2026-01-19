@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import Sidebar from './Sidebar';
+import VoiceAssistant from '../VoiceAssistant';
 
 
 interface DashboardLayoutProps {
@@ -17,6 +18,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <main className="flex-1 relative min-h-screen pt-20 px-4 md:px-8 pb-8 transition-all duration-300 w-full max-w-[1600px] mx-auto">
                 {children}
             </main>
+
+            <VoiceAssistant />
         </div>
     );
 }
+
