@@ -1,5 +1,3 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
-
 interface Session {
     status: string;
     verification_status: string;
@@ -62,7 +60,7 @@ async function getAIResponse(message: string, language: string = 'en'): Promise<
     return "I'm experiencing technical difficulties.";
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
