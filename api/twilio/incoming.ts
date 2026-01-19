@@ -1,3 +1,5 @@
+import * as querystring from 'querystring';
+
 interface Session {
     status: string;
     verification_status: string;
@@ -6,6 +8,9 @@ interface Session {
     username?: string;
 }
 
+// In Vercel usage, global variables persist only while the container is warm.
+// For a production app, use Redis or a DB (Firestore/SQLite).
+// For this demo, this map works per-container.
 const sessions = new Map<string, Session>();
 
 function getSession(callSid: string): Session {
@@ -60,32 +65,72 @@ async function getAIResponse(message: string, language: string = 'en'): Promise<
     return "I'm experiencing technical difficulties.";
 }
 
+// Robust body parser for Twilio form-urlencoded data
+async function parseBody(req: any): Promise<any> {
+    // 1. If req.body is already an object (and not empty), use it
+    if (req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0) {
+        return req.body;
+    }
+
+    // 2. If req.body is a string, parse it
+    if (typeof req.body === 'string') {
+        return querystring.parse(req.body);
+    }
+
+    // 3. Fallback: read from stream if req.body is undefined/empty
+    // Note: Vercel functions consume the body by default, so this usually runs if automatic parsing failed
+    // or if the content-type wasn't auto-detected.
+    try {
+        const buffers = [];
+        for await (const chunk of req) {
+            buffers.push(chunk);
+        }
+        const data = Buffer.concat(buffers).toString();
+        return querystring.parse(data);
+    } catch (e) {
+        console.error("Error parsing body stream:", e);
+        return {};
+    }
+}
+
 export default async function handler(req: any, res: any) {
-    const { CallSid, From, SpeechResult, Digits } = req.body;
-    const sessionId = CallSid || 'unknown-call';
+    if (req.method !== 'POST') {
+        return res.status(405).send('Method Not Allowed');
+    }
+
+    // Parse the body (whether JSON, parsed form, or raw stream)
+    const body = await parseBody(req);
+
+    // Fallback values to prevent destructuring undefined
+    const CallSid = body.CallSid || 'unknown-call';
+    const From = body.From || 'unknown';
+    const SpeechResult = body.SpeechResult || '';
+    const Digits = body.Digits || '';
+
     const userInput = (SpeechResult || Digits || '').trim();
 
-    console.log(`[Twilio Call: ${sessionId}] From: ${From}, Input: "${userInput}"`);
+    console.log(`[Twilio Call: ${CallSid}] From: ${From}, Input: "${userInput}"`);
 
-    const session = getSession(sessionId);
+    const session = getSession(CallSid);
     let responseMessage = '';
     let shouldGather = true;
     let shouldHangup = false;
 
+    // State machine for call flow
     if (session.status === 'wait_for_username') {
         if (!userInput) {
             responseMessage = 'Hello, welcome to Sarthi AI. Please say your username.';
         } else {
             const username = userInput.toLowerCase();
             if (username.includes('arvind') || username.includes('aravind')) {
-                updateSession(sessionId, {
+                updateSession(CallSid, {
                     username: 'arvind',
                     status: 'wait_for_password',
                     last_response: 'Username received. Please say your PIN.'
                 });
                 responseMessage = 'Username received. Please say your PIN.';
             } else {
-                updateSession(sessionId, {
+                updateSession(CallSid, {
                     failed_attempts: session.failed_attempts + 1,
                     last_response: 'Username not recognized. Please try again.'
                 });
@@ -94,7 +139,7 @@ export default async function handler(req: any, res: any) {
                     responseMessage = 'Verification failed. Goodbye.';
                     shouldHangup = true;
                     shouldGather = false;
-                    deleteSession(sessionId);
+                    deleteSession(CallSid);
                 } else {
                     responseMessage = 'Username not recognized. Please try again.';
                 }
@@ -109,7 +154,7 @@ export default async function handler(req: any, res: any) {
             const pin = pinMatch ? pinMatch[0] : userInput;
 
             if (pin === '1234') {
-                updateSession(sessionId, {
+                updateSession(CallSid, {
                     status: 'answer_agri_question',
                     verification_status: 'success',
                     failed_attempts: 0,
@@ -118,7 +163,7 @@ export default async function handler(req: any, res: any) {
                 responseMessage = 'Verification successful. How can I help you today?';
             } else {
                 const newFailCount = session.failed_attempts + 1;
-                updateSession(sessionId, {
+                updateSession(CallSid, {
                     failed_attempts: newFailCount,
                     last_response: 'Incorrect PIN. Please try again.'
                 });
@@ -127,7 +172,7 @@ export default async function handler(req: any, res: any) {
                     responseMessage = 'Verification failed. Goodbye.';
                     shouldHangup = true;
                     shouldGather = false;
-                    deleteSession(sessionId);
+                    deleteSession(CallSid);
                 } else {
                     responseMessage = 'Incorrect PIN. Please try again.';
                 }
@@ -145,23 +190,25 @@ export default async function handler(req: any, res: any) {
                 responseMessage = 'Thank you for calling. Have a good day.';
                 shouldHangup = true;
                 shouldGather = false;
-                deleteSession(sessionId);
+                deleteSession(CallSid);
             } else {
                 const aiResponse = await getAIResponse(userInput, 'en');
                 responseMessage = aiResponse + '. Do you have any other question?';
-                updateSession(sessionId, {
+                updateSession(CallSid, {
                     last_response: responseMessage
                 });
             }
         }
     }
     else {
+        // Default / Reset
         responseMessage = 'Hello, welcome to Sarthi AI. Please say your username.';
-        updateSession(sessionId, {
+        updateSession(CallSid, {
             status: 'wait_for_username'
         });
     }
 
+    // Generate TwiML
     res.setHeader('Content-Type', 'text/xml');
 
     let twiml = '<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n';
