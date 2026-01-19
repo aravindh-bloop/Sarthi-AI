@@ -13,8 +13,6 @@ import {
     ArrowRight,
     Mail,
     ShieldCheck,
-    Globe,
-    ChevronDown,
     Brain,
     ScanLine,
     History,
@@ -29,7 +27,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+
 import { useTranslation } from "react-i18next"; // Added to support existing i18n if needed, but the user code uses hardcoded text or local state.
 
 
