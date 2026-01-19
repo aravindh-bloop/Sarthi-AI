@@ -61,13 +61,9 @@ async function getAIResponse(message: string, language: string = 'en'): Promise<
 }
 
 export default async function handler(req: any, res: any) {
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
-    }
-
-    const { CallSid, From, SpeechResult } = req.body;
+    const { CallSid, From, SpeechResult, Digits } = req.body;
     const sessionId = CallSid || 'unknown-call';
-    const userInput = (SpeechResult || '').trim();
+    const userInput = (SpeechResult || Digits || '').trim();
 
     console.log(`[Twilio Call: ${sessionId}] From: ${From}, Input: "${userInput}"`);
 
@@ -76,7 +72,6 @@ export default async function handler(req: any, res: any) {
     let shouldGather = true;
     let shouldHangup = false;
 
-    // State machine for call flow
     if (session.status === 'wait_for_username') {
         if (!userInput) {
             responseMessage = 'Hello, welcome to Sarthi AI. Please say your username.';
@@ -167,21 +162,21 @@ export default async function handler(req: any, res: any) {
         });
     }
 
-    // Generate Twilio TwiML response
-    res.setHeader('Content-Type', 'application/xml');
+    res.setHeader('Content-Type', 'text/xml');
 
     let twiml = '<?xml version="1.0" encoding="UTF-8"?>\n<Response>\n';
 
     if (shouldGather) {
-        twiml += `  <Gather input="speech" language="en-IN" speechTimeout="3" action="https://sarthi-ai-platform-v1.vercel.app/api/twilio/incoming" method="POST">\n`;
+        twiml += '  <Gather input="speech dtmf" timeout="5" action="/api/twilio/incoming" method="POST">\n';
         twiml += `    <Say voice="woman" language="en-IN">${escapeXml(responseMessage)}</Say>\n`;
         twiml += '  </Gather>\n';
+        twiml += '  <Say>I did not receive any input.</Say>\n';
+        twiml += '  <Hangup/>\n';
     } else {
         twiml += `  <Say voice="woman" language="en-IN">${escapeXml(responseMessage)}</Say>\n`;
-    }
-
-    if (shouldHangup) {
-        twiml += '  <Hangup/>\n';
+        if (shouldHangup) {
+            twiml += '  <Hangup/>\n';
+        }
     }
 
     twiml += '</Response>';
